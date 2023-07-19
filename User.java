@@ -112,6 +112,51 @@ public class User extends Thread {
 
     public void deleteMessage(String name) {
         // duplicate message issue
-        // paste code here
+        // paste code hereimport java.io.*;
+import java.util.*;
+
+public class Methods {
+
+    public static void deleteMessage(String name) {
+        String csvFilePath = "messages.csv"; // Replace with the actual path of your CSV file
+
+        List<String[]> messages = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] messageData = line.split(",");
+                messages.add(messageData);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return; // Exit the method if an exception occurs during file reading
+        }
+
+        List<String[]> updatedMessages = new ArrayList<>();
+
+        for (String[] message : messages) {
+            String name1 = message[0];
+            String content = message[1];
+
+            if (!name.equals(name1)) {
+                updatedMessages.add(message);
+            }
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFilePath))) {
+            for (String[] message : updatedMessages) {
+                writer.write(String.join(",", message));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return; // Exit the method if an exception occurs during file writing
+        }
+    }
+
+    // Sample usage of the deleteMessage method
+  
+    }}
     }
 }
