@@ -1,5 +1,12 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 
 public class User extends Thread {
     private boolean userType; // true = seller, false = customer
@@ -58,15 +65,31 @@ public class User extends Thread {
         return conversationName;
     }
 
-    public void createMessage() {
+    public void createMessage(String name, String message) {
+        File csvFile = new File(String.format("%s_%s.csv", this.name, name));
+        try {
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+            LocalDateTime now = LocalDateTime.now();
+
+            FileWriter fileWriter = new FileWriter(csvFile);
+
+            String tempMessage = String.format("%s,%s,%s,%s", name, this.name, dtf.format(now), message);
+            fileWriter.write(tempMessage);
+
+            fileWriter.close();
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     public void editMessage() {
-
+        // duplicate message issue
     }
 
     public void deleteMessage(String name) {
-
+        // duplicate message issue
     }
 }
