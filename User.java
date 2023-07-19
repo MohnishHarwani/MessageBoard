@@ -87,9 +87,11 @@ public class User extends Thread {
 
     public void editMessage() {
         // duplicate message issue
+        // paste code here
     }
 
     public void deleteMessage(String name) {
         // duplicate message issue
+        // paste code here
     }
 }
