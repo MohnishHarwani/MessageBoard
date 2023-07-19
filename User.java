@@ -85,9 +85,29 @@ public class User extends Thread {
 
     }
 
-    public void editMessage() {
-        // duplicate message issue
-        // paste code here
+    public void ArrayList<String> EditMessage(String oldMessage, String newMessage, String filename) throws FileNotFoundException {
+                ArrayList<String> data = new ArrayList<>();
+                try {
+                        FileReader fr = new FileReader(filename);
+                        BufferedReader bfr = new BufferedReader(fr);
+                        int line = 0;
+                        String s = "";
+                        String temp = "";
+
+                        while (bfr.ready()) {
+                                temp = bfr.readLine();
+                                if (temp.contains(oldMessage)) {
+                                        temp = temp.replace(oldMessage, newMessage);
+                                }
+                                data.add(temp);
+                        }
+                        return data;
+                } catch(FileNotFoundException e) {
+                        e.printStackTrace();
+                } catch (IOException e) {
+                        throw new RuntimeException(e);
+                }
+                return data;
     }
 
     public void deleteMessage(String name) {
