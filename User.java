@@ -1,12 +1,8 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.security.MessageDigest;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Scanner;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
+import java.util.Scanner;
 
 public class User extends Thread {
     private boolean userType; // true = seller, false = customer
@@ -14,8 +10,10 @@ public class User extends Thread {
     private String username;
     private String name;
     private ArrayList<String> conversationName;
+    private ArrayList<String> blockList;
 
     public User(boolean userType, String password, String name, String username) {
+        this.userType = userType;
         this.password = password;
         this.name = name;
         this.username = username;
@@ -45,118 +43,183 @@ public class User extends Thread {
         this.username = username;
     }
 
-    public boolean addConversation(String name) {
+    public ArrayList<String> returnConversationName() {
+        return conversationName;
+    }
+
+    public boolean canMakeConversation(User receiver) {
+        return receiver.isUserType() == this.userType;
+    }
+
+    public boolean isBlocked(User user) {
+        int counter = 0;
+        while(counter++ < blockList.size()) {
+            if (user.getName().equals(blockList.get(counter)))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean checkUniqueUser(User user) {
+        return !(user.getUsername().equals(this.username) &&
+                user.isUserType() == this.userType && user.getName().equals(this.name));
+    }
+
+    public boolean addConversation(User receiver) {
         boolean containsName = false;
 
-        for (String a: conversationName) {
-            if (a.equals(name))
+        for (String a : conversationName) {
+            if (a.equals(receiver.getName()))
                 containsName = true;
         }
 
         if (!containsName) {
-            File file = new File(String.format("%s_%s.csv", this.name, name));
-            conversationName.add(name);
+            File file = new File(String.format("%s_%s.csv", this.name, receiver.getName()));
+            conversationName.add(receiver.getName());
         }
 
         return containsName;
     }
 
-    public ArrayList<String> returnConversationName(){
-        return conversationName;
+    public String fileName(String name) {
+        String tempAddress = String.format("%s_%s.csv", this.name, name);
+        File file = new File(tempAddress);
+        if (file.exists()) {
+            return tempAddress;
+        }
+        return "File not find";
     }
 
-    public void createMessage(String name, String message) {
-        File csvFile = new File(String.format("%s_%s.csv", this.name, name));
+    public void createMessage(User receiver, String message) {
+        File csvFile = new File(fileName(receiver.getName()));
         try {
+            ArrayList<String> previousMessage = new ArrayList<>();
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
             LocalDateTime now = LocalDateTime.now();
+            String tempMessage = String.format("%s,%s,%s,%s", receiver.getName(),
+                    this.name, dtf.format(now), message);
 
-            FileWriter fileWriter = new FileWriter(csvFile);
-
-            String tempMessage = String.format("%s,%s,%s,%s", name, this.name, dtf.format(now), message);
-            fileWriter.write(tempMessage);
-
-            fileWriter.close();
-        } catch (FileNotFoundException e) {
-            throw new FileNotFoundException(e);
+            if (!fileName(receiver.getName()).equals("File not find")) {
+                Scanner scan = new Scanner(csvFile);
+                while (scan.hasNextLine()) {
+                    previousMessage.add(scan.nextLine());
+                }
+                previousMessage.add(tempMessage);
+                PrintWriter fileWriter = new PrintWriter(csvFile);
+                previousMessage.forEach((n) -> {
+                    fileWriter.print(n + "\n");
+                });
+                fileWriter.close();
+            } else {
+                PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv", this.name, name));
+                fileWriter.println(tempMessage);
+                fileWriter.close();
+            }
+            duplicateConversation(receiver);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
     }
 
-    public void ArrayList<String> EditMessage(String oldMessage, String newMessage, String filename) throws FileNotFoundException {
-                ArrayList<String> data = new ArrayList<>();
-                try {
-                        FileReader fr = new FileReader(filename);
-                        BufferedReader bfr = new BufferedReader(fr);
-                        int line = 0;
-                        String s = "";
-                        String temp = "";
+    public void EditMessage(User receiver, String oldMessage, String newMessage) throws ConversationNotExistException {
+        if (!fileName(receiver.getName()).equals("File not find")) {
+            ArrayList<String> data = new ArrayList<>();
+            try {
+                FileReader fr = new FileReader(fileName(receiver.getName()));
+                BufferedReader bfr = new BufferedReader(fr);
+                int counter = 0;
+                String s = "";
+                String temp = "";
+                String[] messageDecomp;
 
-                        while (bfr.ready()) {
-                                temp = bfr.readLine();
-                                if (temp.contains(oldMessage)) {
-                                        temp = temp.replace(oldMessage, newMessage);
-                                }
-                                data.add(temp);
-                        }
-                        return data;
-                } catch(FileNotFoundException e) {
-                        e.printStackTrace();
-                } catch (IOException e) {
-                        throw new RuntimeException(e);
+                while (bfr.ready()) {
+                    temp = bfr.readLine();
+                    messageDecomp = temp.split(",", 4);
+                    if (messageDecomp[3].contains(oldMessage)) {
+                        messageDecomp[3] = messageDecomp[3].replace(oldMessage, newMessage);
+                    }
+
+                    s = (String.join(",", messageDecomp));
+                    /*
+                    while (counter < 4) {
+                        s += (counter == 3) ? messageDecomp[counter] : messageDecomp[counter] + ",";
+                        counter++;
+                    }
+                     */
+                    data.add(s);
                 }
-                return data;
+                bfr.close();
+
+                PrintWriter pw = new PrintWriter(fileName(receiver.getName()));
+                data.forEach((n) -> { pw.print(n + "\n"); });
+
+                pw.close();
+                duplicateConversation(receiver);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            throw new ConversationNotExistException("Message do not exist!");
+        }
     }
 
-    public void deleteMessage(String name) {
-        // duplicate message issue
-        // paste code hereimport java.io.*;
-import java.util.*;
+    public void deleteMessage(User receiver, String message) throws ConversationNotExistException {
+        ArrayList<String[]> messages = new ArrayList<>();
+        if (!fileName(receiver.getName()).equals("File not find")) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileName(receiver.getName())))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] messageData = line.split(",", 4);
+                    messages.add(messageData);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
 
-public class Methods {
+            ArrayList<String[]> updatedMessages = new ArrayList<>();
 
-    public static void deleteMessage(String name) {
-        String csvFilePath = "messages.csv"; // Replace with the actual path of your CSV file
+            for (String[] n : messages) {
+                if (!n[3].equals(message)) {
+                    updatedMessages.add(n);
+                }
+            }
 
-        List<String[]> messages = new ArrayList<>();
+            try (PrintWriter writer = new PrintWriter(new File(fileName(receiver.getName())))) {
+                for (String[] n : updatedMessages) {
+                    writer.print(String.join(",", n) + "\n");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+        } else {
+            throw new ConversationNotExistException("Message do not exist!");
+        }
+    }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
-            String line;
+    public void duplicateConversation(User receiver) {
+        try {
+            ArrayList<String> conversationMessage = new ArrayList<>();
+            String line = "";
+            FileReader senderFile = new FileReader(fileName(receiver.getName()));
+            BufferedReader reader = new BufferedReader(senderFile);
             while ((line = reader.readLine()) != null) {
-                String[] messageData = line.split(",");
-                messages.add(messageData);
+                conversationMessage.add(line);
             }
+            File file = new File(String.format("%s_%s.csv", receiver.getName(), this.name));
+            PrintWriter pw = new PrintWriter(file);
+            conversationMessage.forEach((n) -> { pw.print(n + "\n"); });
+            pw.close();
+
         } catch (IOException e) {
             e.printStackTrace();
-            return; // Exit the method if an exception occurs during file reading
+            return;
         }
 
-        List<String[]> updatedMessages = new ArrayList<>();
-
-        for (String[] message : messages) {
-            String name1 = message[0];
-            String content = message[1];
-
-            if (!name.equals(name1)) {
-                updatedMessages.add(message);
-            }
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFilePath))) {
-            for (String[] message : updatedMessages) {
-                writer.write(String.join(",", message));
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return; // Exit the method if an exception occurs during file writing
-        }
     }
 
-    // Sample usage of the deleteMessage method
-  
-    }}
+    public void run() {
+
     }
 }
