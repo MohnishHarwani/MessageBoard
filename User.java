@@ -1,3 +1,4 @@
+import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
@@ -8,15 +9,19 @@ public class User extends Thread {
     private boolean userType; // true = seller, false = customer
     private String password;
     private String username;
-    private String name;
+    private String nameofUser;
     private ArrayList<String> conversationName;
     private ArrayList<String> blockList;
 
-    public User(boolean userType, String password, String name, String username) {
+    public User(boolean userType, String password, String nameofUser, String username) {
         this.userType = userType;
         this.password = password;
-        this.name = name;
+        this.nameofUser = nameofUser;
         this.username = username;
+    }
+
+    public String getNameofUser() {
+        return nameofUser;
     }
 
     public void setUserType(boolean userType) {
@@ -54,7 +59,7 @@ public class User extends Thread {
     public boolean isBlocked(User user) {
         int counter = 0;
         while(counter++ < blockList.size()) {
-            if (user.getName().equals(blockList.get(counter)))
+            if (user.getNameofUser().equals(blockList.get(counter)))
                 return true;
         }
         return false;
@@ -62,27 +67,27 @@ public class User extends Thread {
 
     public boolean checkUniqueUser(User user) {
         return !(user.getUsername().equals(this.username) &&
-                user.isUserType() == this.userType && user.getName().equals(this.name));
+                user.isUserType() == this.userType && user.getNameofUser().equals(this.nameofUser));
     }
 
     public boolean addConversation(User receiver) {
         boolean containsName = false;
 
         for (String a : conversationName) {
-            if (a.equals(receiver.getName()))
+            if (a.equals(receiver.getNameofUser()))
                 containsName = true;
         }
 
         if (!containsName) {
-            File file = new File(String.format("%s_%s.csv", this.name, receiver.getName()));
-            conversationName.add(receiver.getName());
+            File file = new File(String.format("%s_%s.csv", this.nameofUser, receiver.getNameofUser()));
+            conversationName.add(receiver.getNameofUser());
         }
 
         return containsName;
     }
 
     public String fileName(String name) {
-        String tempAddress = String.format("%s_%s.csv", this.name, name);
+        String tempAddress = String.format("%s_%s.csv", this.nameofUser, name);
         File file = new File(tempAddress);
         if (file.exists()) {
             return tempAddress;
@@ -91,15 +96,15 @@ public class User extends Thread {
     }
 
     public void createMessage(User receiver, String message) {
-        File csvFile = new File(fileName(receiver.getName()));
+        File csvFile = new File(fileName(receiver.getNameofUser()));
         try {
             ArrayList<String> previousMessage = new ArrayList<>();
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
             LocalDateTime now = LocalDateTime.now();
-            String tempMessage = String.format("%s,%s,%s,%s", receiver.getName(),
-                    this.name, dtf.format(now), message);
+            String tempMessage = String.format("%s,%s,%s,%s", receiver.getNameofUser(),
+                    this.nameofUser, dtf.format(now), message);
 
-            if (!fileName(receiver.getName()).equals("File not find")) {
+            if (!fileName(receiver.getNameofUser()).equals("File not find")) {
                 Scanner scan = new Scanner(csvFile);
                 while (scan.hasNextLine()) {
                     previousMessage.add(scan.nextLine());
@@ -111,7 +116,7 @@ public class User extends Thread {
                 });
                 fileWriter.close();
             } else {
-                PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv", this.name, name));
+                PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv", this.nameofUser, receiver.getNameofUser()));
                 fileWriter.println(tempMessage);
                 fileWriter.close();
             }
@@ -122,10 +127,10 @@ public class User extends Thread {
     }
 
     public void EditMessage(User receiver, String oldMessage, String newMessage) throws ConversationNotExistException {
-        if (!fileName(receiver.getName()).equals("File not find")) {
+        if (!fileName(receiver.getNameofUser()).equals("File not find")) {
             ArrayList<String> data = new ArrayList<>();
             try {
-                FileReader fr = new FileReader(fileName(receiver.getName()));
+                FileReader fr = new FileReader(fileName(receiver.getNameofUser()));
                 BufferedReader bfr = new BufferedReader(fr);
                 int counter = 0;
                 String s = "";
@@ -150,7 +155,7 @@ public class User extends Thread {
                 }
                 bfr.close();
 
-                PrintWriter pw = new PrintWriter(fileName(receiver.getName()));
+                PrintWriter pw = new PrintWriter(fileName(receiver.getNameofUser()));
                 data.forEach((n) -> { pw.print(n + "\n"); });
 
                 pw.close();
@@ -165,8 +170,8 @@ public class User extends Thread {
 
     public void deleteMessage(User receiver, String message) throws ConversationNotExistException {
         ArrayList<String[]> messages = new ArrayList<>();
-        if (!fileName(receiver.getName()).equals("File not find")) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(fileName(receiver.getName())))) {
+        if (!fileName(receiver.getNameofUser()).equals("File not find")) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileName(receiver.getNameofUser())))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String[] messageData = line.split(",", 4);
@@ -185,7 +190,7 @@ public class User extends Thread {
                 }
             }
 
-            try (PrintWriter writer = new PrintWriter(new File(fileName(receiver.getName())))) {
+            try (PrintWriter writer = new PrintWriter(new File(fileName(receiver.getNameofUser())))) {
                 for (String[] n : updatedMessages) {
                     writer.print(String.join(",", n) + "\n");
                 }
@@ -202,12 +207,12 @@ public class User extends Thread {
         try {
             ArrayList<String> conversationMessage = new ArrayList<>();
             String line = "";
-            FileReader senderFile = new FileReader(fileName(receiver.getName()));
+            FileReader senderFile = new FileReader(fileName(receiver.getNameofUser()));
             BufferedReader reader = new BufferedReader(senderFile);
             while ((line = reader.readLine()) != null) {
                 conversationMessage.add(line);
             }
-            File file = new File(String.format("%s_%s.csv", receiver.getName(), this.name));
+            File file = new File(String.format("%s_%s.csv", receiver.getNameofUser(), this.nameofUser));
             PrintWriter pw = new PrintWriter(file);
             conversationMessage.forEach((n) -> { pw.print(n + "\n"); });
             pw.close();
