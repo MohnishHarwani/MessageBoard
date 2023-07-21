@@ -84,6 +84,10 @@ public class User extends Thread {
         return containsName;
     }
 
+    public void addStore(String storeName) {
+        this.storeName.add(storeName);
+    }
+
     public void createMessage(User receiver, String message) {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);

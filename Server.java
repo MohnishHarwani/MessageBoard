@@ -199,8 +199,69 @@ public class Server {
                     typeOfOperation = Integer.parseInt(serverInput);
 
                     switch (typeOfOperation) {
-                        case 5:
+                        case 8:
                             endProgram = true;
+                            break;
+                        case 7:
+                            tempUserList.removeAll(tempUserList);
+                            if (currentUser.isUserType()) {
+                                writer.write("Not seller");
+                                writer.println();
+                                writer.flush();
+                            } else {
+                                writer.println("seller");
+                                serverOutput = currentUser.getStoreName().stream().collect(Collectors.joining(";"));
+                                writer.write(serverOutput);
+                                writer.println();
+                                writer.flush();
+                                currentUser.addStore(reader.readLine());
+                            }
+                            break;
+                        case 6:
+                            tempUserList.removeAll(tempUserList);
+                            serverOutput = currentUser.getInvisibleList().stream()
+                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
+                                    .collect(Collectors.joining(";")); // get all the user from currentUser's block list and send to client as string
+                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            writer.write(serverOutput);
+                            writer.println();
+                            writer.flush();
+                            serverInput = reader.readLine();
+                            tempSplit = serverInput.split(",", 2);
+                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                            if (tempUser.isPresent()) {
+                                unInvisUser(tempUser.get());
+                                writer.write(SUCCESS);
+                            } else {
+                                writer.write(FAIL);
+                            }
+                            writer.println();
+                            writer.flush();
+                            break;
+                        case 5:
+                            tempUserList.removeAll(tempUserList);
+                            tempUserList2.removeAll(tempUserList2);
+                            tempUserList = searchValidUser(reader.readLine());
+                            serverOutput = tempUserList.stream()
+                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
+                                    .collect(Collectors.joining(";")); // combine returned Arraylist's user and send to client as a string
+                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            writer.write(serverOutput);
+                            writer.println();
+                            writer.flush();
+                            serverInput = reader.readLine();
+                            tempSplit = serverInput.split(",", 2);
+                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                            if (tempUser.isPresent()) {
+                                tempUserList2 = currentUser.getInvisibleList();
+                                tempUserList2.add(tempUser.get());
+                                currentUser.setInvisibleList(tempUserList2);
+                                writer.write(SUCCESS);
+                            } else {
+                                writer.write(FAIL);
+                            }
+                            writer.println();
+                            writer.flush();
                             break;
                         case 4:
                             tempUserList.removeAll(tempUserList);

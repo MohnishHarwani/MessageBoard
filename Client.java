@@ -250,7 +250,8 @@ public class Client {
                     error = false;
                     System.out.println("Options -> 0:Select a specific conversation;" +
                             " 1: Search user to create new conversation; 2: Block any user;" +
-                            " 3: Account Modification; 4: Block any user; 5: log off");
+                            " 3: Account Modification; 4: Unblock any user; 5: Invs any user; 6: UnInvis any user;" +
+                            " 7: add store; 8: log off");
                     try {
                         userInputInt = scan.nextInt();
                         if (userInputInt < 0 || userInputInt > 5) {
@@ -268,9 +269,133 @@ public class Client {
                 writer.flush();
                 logOff = false;
                 switch (userInputInt) {
-                    case 5:
+                    case 8:
                         System.out.println("logging off");
                         logOff = true;
+                        break;
+                    case 7:
+                        clientInput = reader.readLine();
+                        if (clientInput.equals("Not Seller")) {
+                            System.out.println("Your are not seller");
+                        } else {
+                            storeNameList.removeAll(storeNameList);
+                            clientInput = reader.readLine();
+                            Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                    .map(String::trim)
+                                    .forEach(storeNameList::add);
+                            do {
+                                error = false;
+                                System.out.println("Enter the store name you want to add");
+                                userInputString = scan.nextLine();
+                                if (userInputString == null) {
+                                    System.out.println(EXIT);
+                                    return;
+                                }
+                                if (userInputString.isEmpty()) {
+                                    System.out.println("Store name cannot be empty");
+                                    error = true;
+                                }
+                            } while (error);
+                            writer.write(userInputString);
+                            writer.println();
+                            writer.flush();
+                        }
+                        break;
+                    case 6:
+                        clientInput = reader.readLine();
+                        if (clientInput.equals("No result")) {
+                            System.out.println("No user been invis by you");
+                        } else {
+                            userNameList.removeAll(userNameList);
+                            Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                    .map(String::trim)
+                                    .forEach(userNameList::add);
+                            System.out.println("Invis Users:");
+                            counter = 0;
+                            while (counter < userNameList.size()) {
+                                System.out.println(userNameList.get(counter));
+                                counter++;
+                            }
+                        }
+                        do {
+                            error = false;
+                            System.out.println("Enter the user you want to" +
+                                    " uninvis email and name separate with comma");
+                            userInputString = scan.nextLine();
+                            if (userInputString == null) {
+                                System.out.println(EXIT);
+                                return;
+                            }
+                            if (userInputString.isEmpty()) {
+                                System.out.println("Email and Name cannot be empty");
+                                error = true;
+                            }
+                        } while (error);
+                        writer.write(userInputString);
+                        writer.println();
+                        writer.flush();
+                        clientInput = reader.readLine();
+                        if (clientInput.equals("fail")) {
+                            System.out.println("Incorrect email and name");
+                        } else {
+                            System.out.println(clientInput);
+                        }
+                        break;
+                    case 5:
+                        do {
+                            error = false;
+                            System.out.println("What is the name of the user you want to invis?");
+                            userInputString = scan.nextLine();
+                            if (userInputString == null) {
+                                System.out.println(EXIT);
+                                return;
+                            }
+                            if (userInputString.isEmpty()) {
+                                System.out.println("Name cannot be empty");
+                                error = true;
+                            }
+                        } while (error);
+                        writer.write(userInputString);
+                        writer.println();
+                        writer.flush();
+                        clientInput = reader.readLine();
+                        if (clientInput.equals("No result")) {
+                            System.out.println("No user that contain the name.");
+                        } else {
+                            userNameList.removeAll(userNameList);
+                            Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into usernameList
+                                    .map(String::trim)
+                                    .forEach(userNameList::add);
+                            System.out.println("Result Users:");
+                            counter = 0;
+                            while (counter < userNameList.size()) {
+                                System.out.println(userNameList.get(counter));
+                                counter++;
+                            }
+                            do {
+                                error = false;
+                                System.out.println("Enter the user you want to" +
+                                        " invis email and name separate with comma");
+                                userInputString = scan.nextLine();
+                                if (userInputString == null) {
+                                    System.out.println(EXIT);
+                                    return;
+                                }
+                                if (userInputString.isEmpty()) {
+                                    System.out.println("Email and Name cannot be empty");
+                                    error = true;
+                                }
+                            } while (error);
+                            writer.write(userInputString);
+                            writer.println();
+                            writer.flush();
+                            clientInput = reader.readLine();
+                            if (clientInput.equals("fail")) {
+                                System.out.println("Incorrect email and name");
+                            } else {
+                                System.out.println(clientInput);
+                            }
+                        }
                         break;
                     case 4:
                         clientInput = reader.readLine();
