@@ -3,6 +3,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -32,6 +33,8 @@ public class Client {
         ArrayList<String> userNameList = new ArrayList<>();
         ArrayList<String> storeNameList = new ArrayList<>();
         ArrayList<String> conversationList = new ArrayList<>();
+        //System.out.println(InetAddress.getLocalHost().getHostName());
+        //System.out.println(InetAddress.getLocalHost().getHostAddress());
 
         // Start program
         do {
@@ -58,7 +61,8 @@ public class Client {
         try {
             // Connect to server
             System.out.println("Establishing connection");
-            Socket socket = new Socket("localhost", 1234);
+            Socket socket = new Socket(InetAddress.getLocalHost().getHostName(), 4242);
+            System.out.println("Connect successfully");
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter writer = new PrintWriter(socket.getOutputStream());
 
@@ -67,6 +71,7 @@ public class Client {
             do {
                 do {
                     // login page
+                    loggedIn = false;
                     do {
                         error = false;
                         System.out.println("Do you have an account already? Enter 1 for yes, 0 for no.");
@@ -85,6 +90,9 @@ public class Client {
 
                     //create account
                     if (userInputInt == 0) {
+                        writer.write("Create account");
+                        writer.println();
+                        writer.flush();
                         userInfoTemp = "";
                         do {
                             error = false;
@@ -148,10 +156,6 @@ public class Client {
                         } while (error);
                         userInfoTemp += userInputString;
 
-                        writer.write("Create account");
-                        writer.println();
-                        writer.flush();
-
                         writer.write(userInfoTemp);
                         writer.println();
                         writer.flush();
@@ -159,11 +163,12 @@ public class Client {
                         clientInput = reader.readLine();
                         if (clientInput.equals("User Already exist")) {
                             System.out.println(clientOutput);
-                        } else {
-                            loggedIn = true;
                         }
                         // log in
                     } else if (userInputInt == 1) {
+                        writer.write("Log in");
+                        writer.println();
+                        writer.flush();
                         userInfoTemp = "";
                         do {
                             error = false;
@@ -193,10 +198,6 @@ public class Client {
                             }
                         } while (error);
                         userInfoTemp += userInputString;
-
-                        writer.write("Log in");
-                        writer.println();
-                        writer.flush();
 
                         writer.write(userInfoTemp);
                         writer.println();

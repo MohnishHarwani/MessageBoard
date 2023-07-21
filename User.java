@@ -20,6 +20,10 @@ public class User extends Thread {
         this.password = password;
         this.nameOfUser = nameOfUser;
         this.email = email;
+        this.storeName = new ArrayList<String>();
+        this.conversationUser = new ArrayList<User>();
+        this.blockList = new ArrayList<User>();
+        this.invisibleList = new ArrayList<User>();
     }
 
     public String getNameOfUser() {
@@ -52,18 +56,35 @@ public class User extends Thread {
         this.email = email;
     }
 
-    public ArrayList<User> getConversationUser() { return getConversationUser(); }
+    public ArrayList<User> getConversationUser() { return conversationUser; }
 
-    public ArrayList<String> setStoreName() {return storeName;}
+    public void setConversationUser(ArrayList<User> conversationUser) { this.conversationUser = conversationUser; }
 
     public ArrayList<String> getStoreName() {return storeName;}
 
+    public void setStoreName(ArrayList<String> storeName) {this.storeName = storeName;}
+
     public ArrayList<User> getBlockList() {return blockList;}
+
     public void setBlockList(ArrayList<User> blockList) {this.blockList = blockList;}
 
     public ArrayList<User> getInvisibleList() {return invisibleList;}
 
     public void setInvisibleList(ArrayList<User> invisibleList) {this.invisibleList = invisibleList;}
+
+    public void addStore(String storeName) {this.storeName.add(storeName);}
+
+    public void addConvUser(User user) {
+        this.conversationUser.add(user);
+    }
+
+    public void addBlockUser(User user) {
+        this.blockList.add(user);
+    }
+
+    public void addInvis(User user) {
+        this.invisibleList.add(user);
+    }
 
     public boolean isBlocked(User receiver) {
         return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver)); // checking if receiver is in block list
@@ -82,10 +103,6 @@ public class User extends Thread {
             conversationUser.add(receiver);
         }
         return containsName;
-    }
-
-    public void addStore(String storeName) {
-        this.storeName.add(storeName);
     }
 
     public void createMessage(User receiver, String message) {
@@ -288,6 +305,10 @@ public class User extends Thread {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String toString() {
+        return this.email + "-" + this.nameOfUser;
     }
 }
 
