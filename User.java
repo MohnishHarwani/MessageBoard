@@ -107,9 +107,7 @@ public class User extends Thread {
 
     public void createMessage(User receiver, String message) {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
-        System.out.println(senderAddress);
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
-        System.out.println(receiverAddress);
         try {
             // Assemble message
             ArrayList<String> previousMessage = new ArrayList<>();
@@ -241,8 +239,6 @@ public class User extends Thread {
         ArrayList<String[]> updatedMessages = new ArrayList<>();
 
         for (String[] n : messages) {
-            System.out.print(n[2].equals(time) + " ");
-            System.out.println(n[3].equals(message));
             if (!n[3].equals(message) || !n[2].equals(time)) {
                 updatedMessages.add(n);
             }
@@ -265,27 +261,34 @@ public class User extends Thread {
         }
     }
 
-    public ArrayList<String[]> display50Message(User receiver){
+    public ArrayList<String[]> display50Message(User receiver) throws NoPreviousMessageException {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
         ArrayList<String[]> messages = new ArrayList<>();
         boolean noMessageFound = true;
-        try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.substring(0, line.indexOf(",") + 1);
-                String[] messageData = line.split(",", 3);
-                messages.add(messageData);
+        String tempString;
+        if (senderFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.substring(line.indexOf(",")+1);
+                    String[] messageData = line.split(",", 3);
+                    tempString = messageData[1];
+                    messageData[1] = messageData[0];
+                    messageData[0] = tempString;
+                    messages.add(messageData);
+                }
+            } catch (IOException e) {
+                throw new NoPreviousMessageException("No message");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        if (messages.size() > 50) {
-            int elementsToRemove = messages.size() - 50;
-            messages.subList(0, elementsToRemove).clear();
+            if (messages.size() > 50) {
+                int elementsToRemove = messages.size() - 50;
+                messages.subList(0, elementsToRemove).clear();
+            }
+        } else {
+            throw new NoPreviousMessageException("No message");
         }
-
         return messages;
     }
 
