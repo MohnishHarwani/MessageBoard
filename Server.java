@@ -1,3 +1,4 @@
+import javax.sound.midi.SysexMessage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -104,7 +105,7 @@ public class Server {
 
     public static Optional<User> exactPerson(ArrayList<User> listOfUser, String email, String name) {
         return listOfUser.stream()
-                .filter(user -> user.getEmail().equals(email) && user.getEmail().equals(name)).findFirst();
+                .filter(user -> user.getEmail().equals(email) && user.getNameOfUser().equals(name)).findFirst();
         // check if input email and name combination exist in the input list of user
     }
 
@@ -182,7 +183,7 @@ public class Server {
                         } else {
                             tempUser2 = exactPerson(users, a[2].substring(0, a[2].indexOf("-")),
                                     a[2].substring(a[2].indexOf("-") + 1));
-                            if (tempUser.isPresent()) {
+                            if (tempUser2.isPresent()) {
                                 switch (a[1]) {
                                     case "block":
                                         tempUser.get().addBlockUser(tempUser2.get());
@@ -192,12 +193,12 @@ public class Server {
                                         break;
                                     case "chat":
                                         tempUser.get().addConversation(tempUser2.get());
+                                        tempUser2.get().addConversation(tempUser.get());
                                         break;
                                 }
                             }
                         }
                     }
-                    users.add(new User(Boolean.parseBoolean(a[0]), a[1], a[2], a[3]));
                 }
             bfr.close();
         } catch (FileNotFoundException e) {
@@ -286,10 +287,11 @@ public class Server {
             int typeOfOperation = 4;
             boolean endProgram = false;
 
-            while (typeOfOperation != 0) {
+            while (typeOfOperation != 8) {
                 serverInput = reader.readLine();
                 typeOfOperation = Integer.parseInt(serverInput);
 
+                endProgram = false;
                 switch (typeOfOperation) {
                     case 8:
                         endProgram = true;
@@ -447,6 +449,7 @@ public class Server {
                         writer.flush();
                         break;
                     case 0:
+                        tempUserList = currentUser.getConversationUser();
                         serverOutput = currentUser.getConversationUser().stream()
                                 .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                 .collect(Collectors.joining(";"));
@@ -469,9 +472,9 @@ public class Server {
                                         serverInput = reader.readLine();
                                         if (!tempReceiver.isBlocked(currentUser)) {
                                             if (serverInput.contains(".txt")) {
-                                                currentUser.createMessage(tempReceiver, serverInput);
-                                            } else {
                                                 currentUser.sendTxtFile(tempReceiver, serverInput);
+                                            } else {
+                                                currentUser.createMessage(tempReceiver, serverInput);
                                             }
                                         } else {
                                             System.out.println("You are blocked by receiver, cannot send message");
