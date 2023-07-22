@@ -107,7 +107,9 @@ public class User extends Thread {
 
     public void createMessage(User receiver, String message) {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
+        System.out.println(senderAddress);
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
+        System.out.println(receiverAddress);
         try {
             // Assemble message
             ArrayList<String> previousMessage = new ArrayList<>();
@@ -123,11 +125,10 @@ public class User extends Thread {
                     previousMessage.add(scan.nextLine());
                 }
                 previousMessage.add(tempMessage);
-                PrintWriter fileWriter = new PrintWriter(senderFile);
-                previousMessage.forEach((n) -> { // print all previous message in to the file
-                    fileWriter.print(n + "\n");
-                });
-                fileWriter.close();
+
+                PrintWriter pw = new PrintWriter(senderFile);
+                previousMessage.forEach((n -> pw.printf(n + "\n")));
+                pw.close();
             } else {
                 PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv",
                         this.nameOfUser, receiver.getNameOfUser()));
@@ -143,14 +144,12 @@ public class User extends Thread {
                     previousMessage.add(scan.nextLine());
                 }
                 previousMessage.add(tempMessage);
-                PrintWriter fileWriter = new PrintWriter(receiverFile);
-                previousMessage.forEach((n) -> { // print all previous message in to the file
-                    fileWriter.print(n + "\n");
-                });
-                fileWriter.close();
+
+                PrintWriter pw = new PrintWriter(receiverFile);
+                previousMessage.forEach((n -> pw.printf(n + "\n")));
+                pw.close();
             } else {
-                PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv",
-                        this.nameOfUser, receiver.getNameOfUser()));
+                PrintWriter fileWriter = new PrintWriter(receiverAddress);
                 fileWriter.println(tempMessage);
                 fileWriter.close();
             }
