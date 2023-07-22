@@ -1,0 +1,13 @@
+public static void viewProductReviews(User seller, String productName) {
+        System.out.println("The reviews for" + productName + " are listed here");
+        ArrayList<String[]> reviews = seller.display50Message(productName); // Assuming display50Message returns the reviews
+        if (reviews.isEmpty()) {
+        System.out.println(" Unfortunately no reviews are available.");
+        } else {
+        for (String[] review : reviews) {
+        System.out.println(review[2]); // Assuming the message content is stored at index 2
+        }
+        }
+        System.out.println();
+        }
+        }
