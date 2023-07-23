@@ -63,7 +63,7 @@ public static void addAction(String storeName) - adds a new action to be perform
 public static void userAddStore(String storeName) - this method is used for a seller to add a store to the marketplace - taking in a store name as a String.
 public static void removeAction - removes an action from the users Action arraylist
 public static void replaceAllConversationName(String modifier) throws noMessageFoundException - Modifies a conversation name given a new name (modifier) as a parameter.
-public static void accountModification(String modifier, int action) - ???
+public static void accountModification(String modifier, int action) - Used to modify an account
 public static boolean checkUniqueUser(String email, String nameOfUser) - checks to see if a user already exists.
 public static boolean authenticateUser(User user) - verifys a user's username and password. It then logs them in if an account with the input given exists.
 public static void unBlockUser(User user) - unblocks the given user.
@@ -73,3 +73,4 @@ public static ArrayList<User> searchValidUser(String searchingUsername) - checks
 public static ArrayList<User> allVisibleStore() - searches all of the registered users and returns an arraylist of all the users that are visible.
 public static ArrayList<User> currentVisibleConversationUser() - returns a list of all of the users available conversations, hiding messages that are not supposed to be visible to a given user.
 public static String displayMessage() - returns a formatted String containing the users message data.
+
