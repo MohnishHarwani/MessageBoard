@@ -1,12 +1,12 @@
 # MessageBoard
 Message Board Project for CS 180 @ Purdue
-# MessageBoard
-Message Board Project for CS 180 @ Purdue
+
+For our project, we decided to implement the message board
 
 Classes:
 
-Server.java - Handles all server-side operations for the application
-Client.java - Accepts input from the user which is sent to the server for processing and storage
+Server.java - Handles all server-side operations for the application.
+Client.java - Accepts input from the user which is sent to the server for processing and storage.
 User.java - A class containing the information associated with a certain user.
 
 User.java fields:
@@ -24,11 +24,19 @@ User.java methods:
 public User(boolean userType, String email, String password, String nameOfUser - creates a new User object with each variable set to it's appropriate arguement in the parameters.
 public void addStore(String storeName) - adds a store with a given name to the list of stores.
 public void createMessage(User reciever, String message) - creates a new message by adding it to the previous list of messages stored in the user's CSV file.
-public ArrayList<String> editMessage(User reciever, String oldMessage, String time, String newMessage) - this edits a message by using the time and oldMessage parameters to find a match within the user's messages.  It then replaces the old message with the String in newMessage.
+public ArrayList<String> editMessage(User reciever, String oldMessage, String time, String newMessage) - this edits a message by using the time and oldMessage parameters to find a match within the user's messages.  It then replaces the public void old message with the String in newMessage.
 public void deleteMessage(User reciever, String time, String message) - Uses the time stamp and message text to search for a message and delete it.
 public void display50messages(User reciever) - returns an arrayList of the user's past 50 messages.
 public void sendTxtFile - sends a copy of a user's conversation history to another user
 public void toString - format for printing a users name
+public void setInvisibleList(ArrayList<User> invisibleList) - setter for the invisible list
+public void setBlockList(ArrayList<User> blockList) - setter for the block list
+public void getInvisibleList(ArrayList<User> invisibleList) - getter for the invisible list
+public ArrayList<User> getBlockList(ArrayList<String> blockList) - getter for the block list
+public void setStoreName(ArrayList<String> storeName) - setter for the store name list
+public ArrayList<String> getStoreName() - getter for the storeName arrayList
+public void setConversationUser(ArrayList<User>) - setter for conversation
+public ArrayList<User> getConversationUser() - getter for conversationUser
 
 
 Client.java fields:
@@ -65,6 +73,3 @@ public static ArrayList<User> searchValidUser(String searchingUsername) - checks
 public static ArrayList<User> allVisibleStore() - searches all of the registered users and returns an arraylist of all the users that are visible.
 public static ArrayList<User> currentVisibleConversationUser() - returns a list of all of the users available conversations, hiding messages that are not supposed to be visible to a given user.
 public static String displayMessage() - returns a formatted String containing the users message data.
-
-
-
