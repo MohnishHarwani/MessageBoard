@@ -7,7 +7,7 @@ Classes:
 
 Server.java - Handles all server-side operations for the application.
 Client.java - Accepts input from the user which is sent to the server for processing and storage.
-User.java - A class containing the information associated with a certain user.
+User.java - A class containing the information associated with a certain user. 
 
 User.java fields:
 
