@@ -1,12 +1,20 @@
-import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 
+/**
+ * User program
+ *
+ * Purdue University -- CS18000 -- Spring 2022 -- Project 4
+ *
+ * @author William Yu, yuwl; Lamiya Laxmidhar, llaxmidh; Mohnish Harwani, mharwan; Ben Hartley, hartleyb;
+ * @version July 22, 2023
+ */
+
 public class User extends Thread {
-    private boolean userType; // true = seller, false = customer
+    private boolean userType;
     private String password;
     private String email;
     private String nameOfUser;
@@ -42,7 +50,7 @@ public class User extends Thread {
         return email;
     }
 
-    public void setNameOfUser(String nameOfUser) {this.nameOfUser = nameOfUser;}
+    public void setNameOfUser(String nameOfUser) { this.nameOfUser = nameOfUser; }
 
     public void setUserType(boolean userType) {
         this.userType = userType;
@@ -60,19 +68,19 @@ public class User extends Thread {
 
     public void setConversationUser(ArrayList<User> conversationUser) { this.conversationUser = conversationUser; }
 
-    public ArrayList<String> getStoreName() {return storeName;}
+    public ArrayList<String> getStoreName() { return storeName; }
 
-    public void setStoreName(ArrayList<String> storeName) {this.storeName = storeName;}
+    public void setStoreName(ArrayList<String> storeName) { this.storeName = storeName; }
 
-    public ArrayList<User> getBlockList() {return blockList;}
+    public ArrayList<User> getBlockList() { return blockList; }
 
-    public void setBlockList(ArrayList<User> blockList) {this.blockList = blockList;}
+    public void setBlockList(ArrayList<User> blockList) { this.blockList = blockList; }
 
-    public ArrayList<User> getInvisibleList() {return invisibleList;}
+    public ArrayList<User> getInvisibleList() { return invisibleList; }
 
-    public void setInvisibleList(ArrayList<User> invisibleList) {this.invisibleList = invisibleList;}
+    public void setInvisibleList(ArrayList<User> invisibleList) { this.invisibleList = invisibleList; }
 
-    public void addStore(String storeName) {this.storeName.add(storeName);}
+    public void addStore(String singleStoreName) { this.storeName.add(singleStoreName); }
 
     public void addConvUser(User user) {
         this.conversationUser.add(user);
@@ -87,16 +95,16 @@ public class User extends Thread {
     }
 
     public boolean isBlocked(User receiver) {
-        return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver)); // checking if receiver is in block list
+        return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
     }
     public boolean isInvisible(User receiver) {
-        return invisibleList.stream().anyMatch(invUser -> invUser.equals(receiver)); // checking if receiver is in invisible list
+        return invisibleList.stream().anyMatch(invUser -> invUser.equals(receiver));
     }
 
     public boolean addConversation(User receiver) {
         boolean containsName = false;
 
-        containsName = conversationUser.stream().anyMatch(validUser -> validUser.equals(receiver)); // check if receiver is in conversation list
+        containsName = conversationUser.stream().anyMatch(validUser -> validUser.equals(receiver));
 
         if (!containsName) {
             File file = new File(String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser()));
@@ -185,7 +193,7 @@ public class User extends Thread {
             }
             bfr.close();
             PrintWriter pw = new PrintWriter(senderAddress);
-            data.forEach((n) -> { pw.print(n + "\n"); }); // print all previous message in to the file
+            data.forEach((n) -> pw.print(n + "\n")); // print all previous message in to the file
             pw.close();
 
             // receiver file
@@ -208,7 +216,7 @@ public class User extends Thread {
             bfr2.close();
 
             PrintWriter pw2 = new PrintWriter(receiverAddress);
-            data.forEach((n) -> { pw2.print(n + "\n"); }); // print all previous message in to the file
+            data.forEach((n) -> pw2.print(n + "\n")); // print all previous message in to the file
 
             pw2.close();
 
@@ -271,7 +279,7 @@ public class User extends Thread {
             try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    line = line.substring(line.indexOf(",")+1);
+                    line = line.substring(line.indexOf(",") + 1);
                     String[] messageData = line.split(",", 3);
                     tempString = messageData[1];
                     messageData[1] = messageData[0];
@@ -301,7 +309,7 @@ public class User extends Thread {
             while ((line = reader.readLine()) != null) {
                 fileMessages.add(line);
             }
-            fileMessages.forEach( n -> createMessage(receiver,n)); // for each element in fileMessage, use createMessage method
+            fileMessages.forEach( n -> createMessage(receiver, n));
         } catch (FileNotFoundException e) {
             throw new FileNotFoundException("Invalid address");
         } catch (IOException e) {
@@ -313,5 +321,3 @@ public class User extends Thread {
         return this.email + "-" + this.nameOfUser;
     }
 }
-
-

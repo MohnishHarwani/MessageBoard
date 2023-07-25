@@ -1,4 +1,3 @@
-import javax.swing.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -6,8 +5,18 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.util.stream.*;
+
+/**
+ * Cilent program
+ *
+ * Purdue University -- CS18000 -- Spring 2022 -- Project 4
+ *
+ * @author William Yu, yuwl; Lamiya Laxmidhar, llaxmidh; Mohnish Harwani, mharwan; Ben Hartley, hartleyb;
+ * @version July 22, 2023
+ */
 
 public class Client {
     public static final String MESSAGE_SYSTEM = "MessageSystem";
@@ -26,7 +35,7 @@ public class Client {
         String tempString = "";
         String clientInput = "";
         String clientOutput = "";
-        String tempSplit[];
+        String[] tempSplit;
         ArrayList<String> userNameList = new ArrayList<>();
         ArrayList<String> userNameList2 = new ArrayList<>();
         ArrayList<String> storeNameList = new ArrayList<>();
@@ -54,7 +63,7 @@ public class Client {
                             System.out.println("Invalid input");
                             error = true;
                         }
-                    } catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException | InputMismatchException e) {
                         System.out.println("Invalid input");
                         error = true;
                     }
@@ -81,7 +90,7 @@ public class Client {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
-                        } catch (IllegalArgumentException e) {
+                        } catch (IllegalArgumentException | InputMismatchException e) {
                             System.out.println("Invalid input");
                             error = true;
                         }
@@ -103,7 +112,7 @@ public class Client {
                                     System.out.println("Invalid input");
                                     error = true;
                                 }
-                            } catch (IllegalArgumentException e) {
+                            } catch (IllegalArgumentException | InputMismatchException e) {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
@@ -226,21 +235,21 @@ public class Client {
                     if (clientInput.equals("Customer display")) {
                         seller = false;
                         clientInput = reader.readLine();
-                        Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into storeNameList
+                        Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
                                 .forEach(storeNameList::add);
                         clientInput = reader.readLine();
-                        Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into storeNameList
+                        Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
                                 .forEach(userNameList2::add);
                     } else {
                         clientInput = reader.readLine();
-                        Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into storeNameList
+                        Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
                                 .forEach(storeNameList::add);
                     }
                     clientInput = reader.readLine();
-                    Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                    Arrays.stream(clientInput.split(";"))
                             .map(String::trim)
                             .forEach(userNameList::add);
                     counter = 0;
@@ -257,7 +266,7 @@ public class Client {
                     } else {
                         System.out.printf("My stores: ");
 
-                        if (storeNameList.isEmpty() || storeNameList.get(0).isEmpty()){
+                        if (storeNameList.isEmpty() || storeNameList.get(0).isEmpty()) {
                             tempString = "None";
                         } else {
                             tempString = storeNameList.stream().collect(Collectors.joining(","));
@@ -265,7 +274,7 @@ public class Client {
                         System.out.println(tempString);
                     }
                     System.out.printf("Exist conversation: ");
-                    if (userNameList.isEmpty() || userNameList.get(0).isEmpty()){
+                    if (userNameList.isEmpty() || userNameList.get(0).isEmpty()) {
                         tempString = "None";
                     } else {
                         tempString = userNameList.stream().collect(Collectors.joining(","));
@@ -277,15 +286,15 @@ public class Client {
                         error = false;
                         System.out.println("Options ->\n0: Select a specific conversation\n" +
                                 "1: Search user to create new conversation\n2: Block any user\n" +
-                                "3: Account Modification\n4: Unblock any user\n5: Invs any user\n6: UnInvis any user\n" +
-                                "7: add store\n8: log off");
+                                "3: Account Modification\n4: Unblock any user\n5: Invs any user\n" +
+                                "6: UnInvis any user\n" + "7: add store\n8: log off");
                         try {
                             userInputInt = scan.nextInt();
                             if (userInputInt < 0 || userInputInt > 8) {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
-                        } catch (IllegalArgumentException e) {
+                        } catch (IllegalArgumentException | InputMismatchException e) {
                             System.out.println("Invalid input");
                             error = true;
                         }
@@ -309,10 +318,11 @@ public class Client {
                                 clientInput = reader.readLine();
                                 System.out.print("Stores owned: ");
                                 if (!clientInput.isEmpty()) {
-                                    Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                    Arrays.stream(clientInput.split(";"))
                                             .map(String::trim)
                                             .forEach(storeNameList::add);
-                                    System.out.println(storeNameList.stream().collect(Collectors.joining(";")));
+                                    System.out.println(storeNameList.stream()
+                                            .collect(Collectors.joining(";")));
                                 } else {
                                     System.out.println("None");
                                 }
@@ -340,7 +350,7 @@ public class Client {
                                 System.out.println("No user been invis by you");
                             } else {
                                 userNameList.removeAll(userNameList);
-                                Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
                                 System.out.println("Invis Users:");
@@ -353,7 +363,7 @@ public class Client {
                             do {
                                 error = false;
                                 System.out.println("Enter the user you want to" +
-                                        " uninvis email and name separate with comma");
+                                        " uninvis email and name separate with comma ex:email,comma");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -400,7 +410,7 @@ public class Client {
                                 System.out.println("No user that contain the name.");
                             } else {
                                 userNameList.removeAll(userNameList);
-                                Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into usernameList
+                                Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
                                 System.out.println("Result Users:");
@@ -412,7 +422,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user you want to" +
-                                            " invis email and name separate with comma");
+                                            " invis email and name separate with comma ex:email,comma");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -444,7 +454,7 @@ public class Client {
                                 System.out.println("No user been blocked by you");
                             } else {
                                 userNameList.removeAll(userNameList);
-                                Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
                                 System.out.println("Blocked Users:");
@@ -457,7 +467,7 @@ public class Client {
                             do {
                                 error = false;
                                 System.out.println("Enter the user you want to" +
-                                        " unblocks email and name separate with comma");
+                                        " unblocks email and name separate with comma  ex:email,comma");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -493,7 +503,7 @@ public class Client {
                                         System.out.println("Invalid input");
                                         error = true;
                                     }
-                                } catch (IllegalArgumentException e) {
+                                } catch (IllegalArgumentException | InputMismatchException e) {
                                     System.out.println("Invalid input");
                                     error = true;
                                 }
@@ -563,7 +573,7 @@ public class Client {
                                 System.out.println("No user that contain the name.");
                             } else {
                                 userNameList.removeAll(userNameList);
-                                Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into usernameList
+                                Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
                                 System.out.println("Result Users:");
@@ -575,7 +585,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user you want to" +
-                                            " block's email and name separate with comma");
+                                            " block's email and name separate with comma ex:email,comma");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -604,7 +614,8 @@ public class Client {
                         case 1:
                             do {
                                 error = false;
-                                System.out.println("What is the name of the user you want to create new conversation?");
+                                System.out.println("What is the name of the user you want" +
+                                        " to create new conversation? (Search)");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -623,7 +634,7 @@ public class Client {
                                 System.out.println("No user that contain the name.");
                             } else {
                                 userNameList.removeAll(userNameList);
-                                Arrays.stream(clientInput.split(";")) // split all returned customer by ; and store into userNameList
+                                Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
                                 System.out.println("Result Users:");
@@ -635,7 +646,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user's email and name separate with comma " +
-                                            "to create new conversation");
+                                            "to create new conversation ex:email,comma");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -667,13 +678,13 @@ public class Client {
                                 conversationList.removeAll(conversationList);
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
-                                        .forEach(conversationList::add); // split all returned customer by ; and store into conversation list
+                                        .forEach(conversationList::add);
                                 System.out.println("Conversation users:");
                                 conversationList.forEach(n -> System.out.println(n));
                                 do {
                                     error = false;
                                     System.out.println("Enter the user's email and name separate with comma " +
-                                            "to enter conversation");
+                                            "to enter conversation ex:email,comma");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -704,7 +715,7 @@ public class Client {
                                             messageList.removeAll(messageList);
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
-                                                    .forEach(messageList::add); // split all returned customer by ; and store into conversation list
+                                                    .forEach(messageList::add);
                                             System.out.println("Messages:");
                                             messageList.forEach(n -> System.out.println(n));
                                         }
@@ -718,7 +729,7 @@ public class Client {
                                                     System.out.println("Invalid input");
                                                     error = true;
                                                 }
-                                            } catch (IllegalArgumentException e) {
+                                            } catch (IllegalArgumentException | InputMismatchException e) {
                                                 System.out.println("Invalid input");
                                                 error = true;
                                             }
@@ -747,14 +758,16 @@ public class Client {
                                                 writer.flush();
                                                 clientInput = reader.readLine();
                                                 if (clientInput.equals("blocked")) {
-                                                    System.out.println("You are blocked by receiver, cannot send message");
+                                                    System.out.println("You are blocked by receiver," +
+                                                            " cannot send message");
                                                 }
                                                 break;
                                             case 1:
                                                 do {
                                                     error = false;
                                                     System.out.println("Enter the old message, time," +
-                                                            " and new message separate with semicolon");
+                                                            " and new message separate with semicolon " +
+                                                            "ex:oldmessage;time;newMessage");
                                                     userInputString = scan.nextLine();
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
@@ -782,7 +795,7 @@ public class Client {
                                                     error = false;
                                                     System.out.println("Enter the time and" +
                                                             " content of the message you want to delete" +
-                                                            " separate with semicolon");
+                                                            " separate with semicolon ex:time;content");
                                                     userInputString = scan.nextLine();
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
@@ -825,7 +838,6 @@ public class Client {
                     }
                 } while (true);
             } while (true);
-            //UnknownHostException | SocketException e
         } catch (UnknownHostException | SocketException e) {
             System.out.println("Given host name and port number cannot" +
                     " establish connection with the server");
