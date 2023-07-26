@@ -20,6 +20,17 @@ import java.util.regex.Pattern;
 
 public class Client {
     public static final String EXIT = "Exiting";
+    public static final String emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+    public static final Pattern emailRegexPattern = Pattern.compile(emailPattern);
+    public static final String namePattern = "^[A-Z][a-z]+\\s[A-Z][a-z]+$";
+    public static final Pattern nameRegexPattern = Pattern.compile(namePattern);
+    public static final String emailCommaName = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}" +
+            "\\b,\\s*\\p{Lu}\\p{L}+\\s+\\p{Lu}\\p{L}+";
+    public static final Pattern emailCommaNamePattern = Pattern.compile(emailCommaName);
+    public static final String editMessageFormat = ".*;\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
+    public static final Pattern editMessagePattern = Pattern.compile(editMessageFormat);
+    public static final String deleteMessageFormat = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
+    public static final Pattern deleteMessagePattern = Pattern.compile(deleteMessageFormat);
 
     public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
@@ -47,10 +58,12 @@ public class Client {
             System.out.println("Connect successfully");
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter writer = new PrintWriter(socket.getOutputStream());
+            /*
             String emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
             Pattern emailRegexPattern = Pattern.compile(emailPattern);
             String namePattern = "^[A-Z][a-z]+\\s[A-Z][a-z]+$";
             Pattern nameRegexPattern = Pattern.compile(namePattern);
+*/
             Matcher matcher;
             // Start program
             do {
@@ -372,6 +385,7 @@ public class Client {
                                 error = false;
                                 System.out.println("Enter the user you want to" +
                                         " indivisibles email and name separate with comma ex:email,name");
+                                matcher = emailCommaNamePattern.matcher(userInputString);
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -381,8 +395,8 @@ public class Client {
                                     System.out.println("Email and Name cannot be empty");
                                     error = true;
                                 }
-                                if (!userInputString.contains(",")) {
-                                    System.out.println("Invalid input, no comma present");
+                                if (!matcher.matches()) {
+                                    System.out.println("Invalid content format");
                                     error = true;
                                 }
                             } while (error);
@@ -429,6 +443,7 @@ public class Client {
                                     error = false;
                                     System.out.println("Enter the user you want to" +
                                             " invisible's email and name separate with comma ex:email,name");
+                                    matcher = emailCommaNamePattern.matcher(userInputString);
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -438,8 +453,8 @@ public class Client {
                                         System.out.println("Email and Name cannot be empty");
                                         error = true;
                                     }
-                                    if (!userInputString.contains(",")) {
-                                        System.out.println("Invalid input, no comma present");
+                                    if (!matcher.matches()) {
+                                        System.out.println("Invalid content format");
                                         error = true;
                                     }
                                 } while (error);
@@ -474,6 +489,7 @@ public class Client {
                                 System.out.println("Enter the user you want to" +
                                         " unblocks email and name separate with comma  ex:email,name");
                                 userInputString = scan.nextLine();
+                                matcher = emailCommaNamePattern.matcher(userInputString);
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
                                     return;
@@ -482,8 +498,8 @@ public class Client {
                                     System.out.println("Email and Name cannot be empty");
                                     error = true;
                                 }
-                                if (!userInputString.contains(",")) {
-                                    System.out.println("Invalid input, no comma present");
+                                if (!matcher.matches()) {
+                                    System.out.println("Invalid content format");
                                     error = true;
                                 }
                             } while (error);
@@ -599,6 +615,7 @@ public class Client {
                                     System.out.println("Enter the user you want to" +
                                             " block's email and name separate with comma ex:email,name");
                                     userInputString = scan.nextLine();
+                                    matcher = emailCommaNamePattern.matcher(userInputString);
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
                                         return;
@@ -607,8 +624,8 @@ public class Client {
                                         System.out.println("Email and Name cannot be empty");
                                         error = true;
                                     }
-                                    if (!userInputString.contains(",")) {
-                                        System.out.println("Invalid input, no comma present");
+                                    if (!matcher.matches()) {
+                                        System.out.println("Invalid content format");
                                         error = true;
                                     }
                                 } while (error);
@@ -659,6 +676,7 @@ public class Client {
                                     System.out.println("Enter the user's email and name separate with comma " +
                                             "to create new conversation ex:email,name");
                                     userInputString = scan.nextLine();
+                                    matcher = emailCommaNamePattern.matcher(userInputString);
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
                                         return;
@@ -667,8 +685,8 @@ public class Client {
                                         System.out.println("Email and Name cannot be empty");
                                         error = true;
                                     }
-                                    if (!userInputString.contains(",")) {
-                                        System.out.println("Invalid input, no comma present");
+                                    if (!matcher.matches()) {
+                                        System.out.println("Invalid content format");
                                         error = true;
                                     }
                                 } while (error);
@@ -696,6 +714,7 @@ public class Client {
                                     System.out.println("Enter the user's email and name separate with comma " +
                                             "to enter conversation ex:email,name");
                                     userInputString = scan.nextLine();
+                                    matcher = emailCommaNamePattern.matcher(userInputString);
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
                                         return;
@@ -704,8 +723,8 @@ public class Client {
                                         System.out.println("Email and Name cannot be empty");
                                         error = true;
                                     }
-                                    if (!userInputString.contains(",")) {
-                                        System.out.println("Invalid input, no comma present");
+                                    if (!matcher.matches()) {
+                                        System.out.println("Invalid content format");
                                         error = true;
                                     }
                                 } while (error);
@@ -776,6 +795,7 @@ public class Client {
                                                             " and new message separate with semicolon " +
                                                             "ex:oldmessage;time;newMessage");
                                                     userInputString = scan.nextLine();
+                                                    matcher = editMessagePattern.matcher(userInputString);
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
                                                         return;
@@ -786,6 +806,10 @@ public class Client {
                                                     }
                                                     if (!userInputString.contains(";")) {
                                                         System.out.println("Invalid input, no semicolon present");
+                                                        error = true;
+                                                    }
+                                                    if (!matcher.matches()) {
+                                                        System.out.println("Invalid format");
                                                         error = true;
                                                     }
                                                 } while (error);
@@ -803,6 +827,7 @@ public class Client {
                                                             " content of the message you want to delete" +
                                                             " separate with semicolon ex:time;content");
                                                     userInputString = scan.nextLine();
+                                                    matcher = deleteMessagePattern.matcher(userInputString);
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
                                                         return;
@@ -811,8 +836,8 @@ public class Client {
                                                         System.out.println("time and content cannot be empty");
                                                         error = true;
                                                     }
-                                                    if (!userInputString.contains(";")) {
-                                                        System.out.println("Invalid input, no semicolon present");
+                                                    if (!matcher.matches()) {
+                                                        System.out.println("Invalid format");
                                                         error = true;
                                                     }
                                                 } while (error);

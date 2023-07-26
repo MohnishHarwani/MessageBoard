@@ -221,7 +221,7 @@ public class ClientHandler implements Runnable{
                                     currentUser.setPassword(tempString);
                                     break;
                                 case 3:
-                                    Server.accountModification("aa", Integer.parseInt(serverInput), currentUser);
+                                    Server.accountModification("a", Integer.parseInt(serverInput), currentUser);
                                     Server.users.removeIf(n -> currentUser.equals(n));
                                     keepProgram = false;
                                     break;

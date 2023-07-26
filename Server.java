@@ -95,7 +95,8 @@ public class Server {
         }
     }
 
-    public synchronized static void replaceAllConversationName(String modifier, User currentUser) throws NoMessageFoundException {
+    public synchronized static void replaceAllConversationName(
+            String modifier, User currentUser) throws NoMessageFoundException {
         String currentDirectory = System.getProperty("user.dir");
         File directory = new File(currentDirectory);
         File[] files = directory.listFiles((dir, name) -> name.contains(currentUser.getNameOfUser()));
@@ -195,7 +196,8 @@ public class Server {
             return false;
         }
     */
-    public synchronized static Optional<User> authenticateUser(ArrayList<User> listOfUser, String email, String password) {
+    public synchronized static Optional<User> authenticateUser(ArrayList<User> listOfUser,
+                                                               String email, String password) {
         return listOfUser.stream()
                 .filter(user -> user.getEmail().equals(email) && user.getPassword().equals(password)).findFirst();
         // check if input email and name combination exist in the input list of user
