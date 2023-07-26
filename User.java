@@ -94,6 +94,9 @@ public class User extends Thread {
         this.invisibleList.add(user);
     }
 
+    public boolean isTalked(User receiver) {
+        return conversationUser.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
+    }
     public boolean isBlocked(User receiver) {
         return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
     }
@@ -114,6 +117,7 @@ public class User extends Thread {
     }
 
     public void createMessage(User receiver, String message) {
+        message = commaReplaceFile(message);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
         try {
@@ -166,6 +170,8 @@ public class User extends Thread {
 
     public void editMessage(User receiver, String oldMessage, String time
             , String newMessage) throws NoMessageFoundException {
+        oldMessage = commaReplaceFile(oldMessage);
+        newMessage = commaReplaceFile(newMessage);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
         boolean noMessageFound = true;
@@ -205,7 +211,7 @@ public class User extends Thread {
             while (bfr2.ready()) {
                 temp = bfr2.readLine();
                 messageDecomp = temp.split(",", 4);
-                if (messageDecomp[3].contains(oldMessage) && time.equals(messageDecomp[2])) {
+                if (messageDecomp[3].equals(oldMessage) && time.equals(messageDecomp[2])) {
                     messageDecomp[3] = messageDecomp[3].replace(oldMessage, newMessage);
                 }
 
@@ -229,6 +235,7 @@ public class User extends Thread {
     }
 
     public void deleteMessage(User receiver, String time, String message) throws NoMessageFoundException {
+        message = commaReplaceFile(message);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
         ArrayList<String[]> messages = new ArrayList<>();
@@ -281,6 +288,7 @@ public class User extends Thread {
                 while ((line = reader.readLine()) != null) {
                     line = line.substring(line.indexOf(",") + 1);
                     String[] messageData = line.split(",", 3);
+                    messageData[2] = commaReplaceDisplay(messageData[2]);
                     tempString = messageData[1];
                     messageData[1] = messageData[0];
                     messageData[0] = tempString;
@@ -315,6 +323,14 @@ public class User extends Thread {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String commaReplaceFile(String message) {
+        return message.replaceAll(",","---");
+    }
+
+    public String commaReplaceDisplay(String message) {
+        return message.replaceAll("---",",");
     }
 
     public String toString() {

@@ -3,13 +3,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * Server program
  *
- * Purdue University -- CS18000 -- Spring 2022 -- Project 4
+ * Purdue University -- CS18000 -- Spring 2022 -- Project 5
  *
  * @author William Yu, yuwl; Lamiya Laxmidhar, llaxmidh; Mohnish Harwani, mharwan; Ben Hartley, hartleyb;
  * @version July 22, 2023
@@ -19,11 +20,9 @@ public class Server {
     public static final String SUCCESS = "success";
     public static final String FAIL = "fail";
 
-    private static ArrayList<User> users;
-    private static ArrayList<String> fileNames = new ArrayList<>();
-    private static User currentUser;
+    public static ArrayList<User> users;
 
-    public static void addUser(User user) throws UserExistException {
+    public synchronized static void addUser(User user) throws UserExistException {
         if (checkUniqueUser(user.getEmail(), user.getNameOfUser())) {
             users.add(user);
 
@@ -47,7 +46,7 @@ public class Server {
         }
     }
 
-    public static void addAction(String action, User user2) {
+    public synchronized static void addAction(String action, User user2, User currentUser) {
         try (BufferedReader reader = new BufferedReader(new FileReader("userAction.csv"))) {
             ArrayList<String> tempAction = new ArrayList<String>();
             String line;
@@ -63,7 +62,7 @@ public class Server {
         }
     }
 
-    public static void userAddStore(String storeName) {
+    public synchronized static void userAddStore(String storeName, User currentUser) {
         try (BufferedReader reader = new BufferedReader(new FileReader("userAction.csv"))) {
             ArrayList<String> tempAction = new ArrayList<String>();
             String line;
@@ -79,7 +78,7 @@ public class Server {
         }
     }
 
-    public static void removeAction(String action, User user2) {
+    public synchronized static void removeAction(String action, User user2, User currentUser) {
         try (BufferedReader reader = new BufferedReader(new FileReader("userAction.csv"))) {
             ArrayList<String> tempAction = new ArrayList<String>();
             String line;
@@ -96,7 +95,7 @@ public class Server {
         }
     }
 
-    public static void replaceAllConversationName(String modifier) throws NoMessageFoundException {
+    public synchronized static void replaceAllConversationName(String modifier, User currentUser) throws NoMessageFoundException {
         String currentDirectory = System.getProperty("user.dir");
         File directory = new File(currentDirectory);
         File[] files = directory.listFiles((dir, name) -> name.contains(currentUser.getNameOfUser()));
@@ -119,11 +118,12 @@ public class Server {
                     String newFileName = fileName.replace(currentUser.getNameOfUser(), modifier);
                     File newFile = new File(directory, newFileName);
                     boolean success = file.renameTo(newFile);
+                    /*
                     if (success) {
                         System.out.println("Renamed: " + fileName + " -> " + newFileName);
                     } else {
                         System.out.println("Failed to rename: " + fileName);
-                    }
+                    }*/
                 } catch (IOException e) {
                     throw new NoMessageFoundException("User have no conversation");
                 }
@@ -131,7 +131,7 @@ public class Server {
         }
     }
 
-    public static void accountModification(String modifier, int action) {
+    public synchronized static void accountModification(String modifier, int action, User currentUser) {
         try {
             BufferedReader infoReader = new BufferedReader(new FileReader("userinfo.csv"));
             BufferedReader actionReader = new BufferedReader(new FileReader("userAction.csv"));
@@ -181,43 +181,47 @@ public class Server {
         }
     }
 
-    public static boolean checkUniqueUser(String email, String nameofUser) {
+    public synchronized static boolean checkUniqueUser(String email, String nameofUser) {
         return !users.stream().anyMatch(validUser -> validUser.getEmail().equals(email)
                 && validUser.getNameOfUser().equals(nameofUser));
     }
-
-    public static boolean authenticateUser(String email, String password) {
-        for (User user : users) {
-            if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
-                currentUser = user;
-                return true;
+    /*
+        public static boolean authenticateUser(String email, String password) {
+            for (User user : users) {
+                if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
+    */
+    public synchronized static Optional<User> authenticateUser(ArrayList<User> listOfUser, String email, String password) {
+        return listOfUser.stream()
+                .filter(user -> user.getEmail().equals(email) && user.getPassword().equals(password)).findFirst();
+        // check if input email and name combination exist in the input list of user
     }
-    public static void unBlockUser(User user) {
-        ArrayList<User> tempUserList;
-        tempUserList = currentUser.getBlockList();
+
+    public synchronized static void unBlockUser(User user, User currentUser) {
+        ArrayList<User> tempUserList = new ArrayList<>(currentUser.getBlockList());
         tempUserList.removeIf(n -> n.equals(user));
         currentUser.setBlockList(tempUserList);
-        removeAction("block", user);
+        removeAction("block", user, currentUser);
     }
 
-    public static void unInvisUser(User user) {
-        ArrayList<User> tempUserList = new ArrayList<>();
-        tempUserList = currentUser.getInvisibleList();
+    public synchronized static void unInvisUser(User user, User currentUser) {
+        ArrayList<User> tempUserList = new ArrayList<>(currentUser.getInvisibleList());
         tempUserList.removeIf(n -> n.equals(user));
         currentUser.setInvisibleList(tempUserList);
-        removeAction("invis", user);
+        removeAction("invis", user, currentUser);
     }
 
-    public static Optional<User> exactPerson(ArrayList<User> listOfUser, String email, String name) {
+    public synchronized static Optional<User> exactPerson(ArrayList<User> listOfUser, String email, String name) {
         return listOfUser.stream()
                 .filter(user -> user.getEmail().equals(email) && user.getNameOfUser().equals(name)).findFirst();
         // check if input email and name combination exist in the input list of user
     }
 
-    public static ArrayList<User> searchValidUser(String searchingUsername) {
+    public synchronized static ArrayList<User> searchValidUser(String searchingUsername, User currentUser) {
         ArrayList<User> userContainSearch = new ArrayList<>();
         users.stream().filter(n -> n.isUserType() != currentUser.isUserType())
                 .forEach(userContainSearch::add); // remove same type user as currentUser
@@ -226,9 +230,9 @@ public class Server {
         // check if any user's name contain the searching String
         return userContainSearch;
     }
-
-    public static ArrayList<User> allVisibleStore() {
-        ArrayList<User> tempVisibleUser = users;
+//here
+    public synchronized static ArrayList<User> allVisibleStore(User currentUser) {
+        ArrayList<User> tempVisibleUser = new ArrayList<>(users);
         tempVisibleUser.removeIf(user -> user.isInvisible(currentUser));
         // remove sellers from list if it is invisible
         tempVisibleUser.removeIf(user -> !user.isUserType());
@@ -236,14 +240,14 @@ public class Server {
         return tempVisibleUser;
     }
 
-    public static ArrayList<User> currentVisibleConversationUser() {
-        ArrayList<User> tempVisibleUser = currentUser.getConversationUser();
+    public synchronized static ArrayList<User> currentVisibleConversationUser(User currentUser) {
+        ArrayList<User> tempVisibleUser = new ArrayList<>(currentUser.getConversationUser());
         tempVisibleUser.removeIf(user -> user.isInvisible(currentUser));
         // remove customer from list if it is invisible
         return tempVisibleUser;
     }
 
-    public static String displayMessage(ArrayList<String[]> messages, int amount) {
+    public synchronized static String displayMessage(ArrayList<String[]> messages, int amount) {
         ArrayList<String> tempMessages = new ArrayList<>();
         String messagsCombined;
         int startIndex = 0;
@@ -262,412 +266,73 @@ public class Server {
     }
 
     public static void main(String[] args) throws IOException {
+        final int port = 4242;
         Optional<User> tempUser;
         Optional<User> tempUser2;
         try {
-            //read previous User data
-            try {
-                users = new ArrayList<User>();
-                File file = new File("userInfo.csv");
-                BufferedReader bfr = new BufferedReader(new FileReader(file));
-                String line;
-                while ((line = bfr.readLine()) != null) {
-                    String[] a = line.split(",", 4);
-                    users.add(new User(Boolean.parseBoolean(a[0]), a[1], a[2], a[3]));
-                }
-                bfr.close();
-            } catch (FileNotFoundException e) {
-                File file = new File("userInfo.csv");
-                file.createNewFile();
+            users = new ArrayList<User>();
+            File file = new File("userInfo.csv");
+            BufferedReader bfr = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = bfr.readLine()) != null) {
+                String[] a = line.split(",", 4);
+                users.add(new User(Boolean.parseBoolean(a[0]), a[1], a[2], a[3]));
             }
+            bfr.close();
+        } catch (FileNotFoundException e) {
+            File file = new File("userInfo.csv");
+            file.createNewFile();
+        }
 
-            try {
-                int counter = 0;
-                File file = new File("userAction.csv");
-                BufferedReader bfr = new BufferedReader(new FileReader(file));
-                String line;
-                while ((line = bfr.readLine()) != null) {
-                    String[] a = line.split(",", 3);
-                    tempUser = exactPerson(users, a[0].substring(0, a[0].indexOf("-")),
-                            a[0].substring(a[0].indexOf("-") + 1));
-                    if (tempUser.isPresent()) {
-                        if (a[1].equals("store")) {
-                            tempUser.get().addStore(a[2]);
-                        } else {
-                            tempUser2 = exactPerson(users, a[2].substring(0, a[2].indexOf("-")),
-                                    a[2].substring(a[2].indexOf("-") + 1));
-                            if (tempUser2.isPresent()) {
-                                switch (a[1]) {
-                                    case "block":
-                                        tempUser.get().addBlockUser(tempUser2.get());
-                                        break;
-                                    case "invis":
-                                        tempUser.get().addInvis(tempUser2.get());
-                                        break;
-                                    case "chat":
-                                        tempUser.get().addConversation(tempUser2.get());
-                                        tempUser2.get().addConversation(tempUser.get());
-                                        break;
-                                }
-                            }
-                        }
-                    }
-                }
-                bfr.close();
-            } catch (FileNotFoundException e) {
-                File file = new File("userAction.csv");
-                file.createNewFile();
-            }
-            ServerSocket serverSocket = new ServerSocket(4242);
-            Socket socket = serverSocket.accept();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter writer = new PrintWriter(socket.getOutputStream());
-
-            ArrayList<User> tempUserList = new ArrayList<>();
-            ArrayList<User> tempUserList2 = new ArrayList<>();
-            User tempReceiver;
-
-            String tempString = "";
-            String serverInput = "";
-            String serverOutput = "";
-            String[] tempSplit;
-
-            boolean conversationOff = false;
-
-            while (socket.isConnected()) {
-                // Server login
-                do {
-                    serverInput = reader.readLine();
-                    if (serverInput.equals("Create account")) {
-                        try {
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 4);
-                            addUser(new User(
-                                    Boolean.parseBoolean(tempSplit[0]), tempSplit[1], tempSplit[2], tempSplit[3]));
-                            writer.println(SUCCESS);
-                            writer.flush();
-                        } catch (UserExistException e) {
-                            writer.println(e.getMessage());
-                            writer.flush();
-                        }
-                    } else if (serverInput.equals("Log in")) {
-                        serverInput = reader.readLine();
-                        tempSplit = serverInput.split(",", 2);
-                        if (authenticateUser(tempSplit[0], tempSplit[1])) {
-                            writer.write(SUCCESS);
-                        } else {
-                            writer.write(FAIL);
-                        }
-                        writer.println();
-                        writer.flush();
-                    }
-                    serverInput = reader.readLine();
-                    if (serverInput.equals("pass")) {
-                        break;
-                    }
-                } while (true);
-                boolean seller = currentUser.isUserType();
-
-                do {
-                    // display
-                    if (seller) {
-                        writer.println("Seller display");
-                        writer.flush();
-                        serverOutput = currentUser.getStoreName().stream().collect(Collectors.joining(";"));
+        try {
+            int counter = 0;
+            File file = new File("userAction.csv");
+            BufferedReader bfr = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = bfr.readLine()) != null) {
+                String[] a = line.split(",", 3);
+                tempUser = exactPerson(users, a[0].substring(0, a[0].indexOf("-")),
+                        a[0].substring(a[0].indexOf("-") + 1));
+                if (tempUser.isPresent()) {
+                    if (a[1].equals("store")) {
+                        tempUser.get().addStore(a[2]);
                     } else {
-                        writer.println("Customer display");
-                        writer.flush();
-                        serverOutput = allVisibleStore().stream()
-                                .map(user -> user.getStoreName().stream().collect(Collectors.joining(",")))
-                                .map(storeNames -> storeNames.isEmpty() ? "None" : storeNames)
-                                .collect(Collectors.joining(";"));
-                        writer.println(serverOutput);
-                        writer.flush();
-                        serverOutput = allVisibleStore().stream().map(
-                                User::getNameOfUser).collect(Collectors.joining(";"));
+                        tempUser2 = exactPerson(users, a[2].substring(0, a[2].indexOf("-")),
+                                a[2].substring(a[2].indexOf("-") + 1));
+                        if (tempUser2.isPresent()) {
+                            switch (a[1]) {
+                                case "block":
+                                    tempUser.get().addBlockUser(tempUser2.get());
+                                    break;
+                                case "invisible":
+                                    tempUser.get().addInvis(tempUser2.get());
+                                    break;
+                                case "chat":
+                                    tempUser.get().addConversation(tempUser2.get());
+                                    break;
+                            }
+                        }
                     }
-                    writer.println(serverOutput);
-                    writer.flush();
-                    serverOutput = currentVisibleConversationUser().stream().map(User::getNameOfUser)
-                            .collect(Collectors.joining(";"));
-                    writer.println(serverOutput);
-                    writer.flush();
-
-                    //operation
-                    int typeOfOperation;
-                    boolean endProgram = false;
-
-                    serverInput = reader.readLine();
-                    typeOfOperation = Integer.parseInt(serverInput);
-
-                    endProgram = false;
-                    switch (typeOfOperation) {
-                        case 8:
-                            endProgram = true;
-                            break;
-                        case 7:
-                            if (!currentUser.isUserType()) {
-                                writer.println("Not seller");
-                                writer.flush();
-                            } else {
-                                writer.println("seller");
-                                writer.flush();
-                                serverOutput = currentUser.getStoreName().stream().collect(Collectors.joining(";"));
-                                writer.write(serverOutput);
-                                writer.println();
-                                writer.flush();
-                                serverInput = reader.readLine();
-                                currentUser.addStore(serverInput);
-                                userAddStore(serverInput);
-                            }
-                            break;
-                        case 6:
-                            tempUserList.removeAll(tempUserList);
-                            tempUserList = currentUser.getInvisibleList();
-                            serverOutput = currentUser.getInvisibleList().stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
-                            writer.write(serverOutput);
-                            writer.println();
-                            writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                unInvisUser(tempUser.get());
-                                writer.write(SUCCESS);
-                            } else {
-                                writer.write(FAIL);
-                            }
-                            writer.println();
-                            writer.flush();
-                            break;
-                        case 5:
-                            tempUserList.removeAll(tempUserList);
-                            tempUserList2.removeAll(tempUserList2);
-                            tempUserList = searchValidUser(reader.readLine());
-                            serverOutput = tempUserList.stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
-                            writer.write(serverOutput);
-                            writer.println();
-                            writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                tempUserList2 = currentUser.getInvisibleList();
-                                tempUserList2.add(tempUser.get());
-                                currentUser.setInvisibleList(tempUserList2);
-                                addAction("invis",tempUser.get());
-                                writer.write(SUCCESS);
-                            } else {
-                                writer.write(FAIL);
-                            }
-                            writer.println();
-                            writer.flush();
-                            break;
-                        case 4:
-                            tempUserList.removeAll(tempUserList);
-                            tempUserList = currentUser.getBlockList();
-                            serverOutput = currentUser.getBlockList().stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
-                            writer.write(serverOutput);
-                            writer.println();
-                            writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                unBlockUser(tempUser.get());
-                                writer.write(SUCCESS);
-                            } else {
-                                writer.write(FAIL);
-                            }
-                            writer.println();
-                            writer.flush();
-                            break;
-                        case 3:
-                            serverInput = reader.readLine();
-                            switch (Integer.parseInt(serverInput)) {
-                                case 0:
-                                    tempString = reader.readLine();
-                                    try {
-                                        replaceAllConversationName(tempString);
-                                    } catch (NoMessageFoundException e) {
-                                        writer.println(e.getMessage());
-                                        writer.flush();
-                                    }
-                                    accountModification(tempString, Integer.parseInt(serverInput));
-                                    currentUser.setNameOfUser(tempString);
-                                    break;
-                                case 1:
-                                    tempString = reader.readLine();
-                                    accountModification(tempString, Integer.parseInt(serverInput));
-                                    currentUser.setEmail(tempString);
-                                    break;
-                                case 2:
-                                    tempString = reader.readLine();
-                                    accountModification(tempString, Integer.parseInt(serverInput));
-                                    currentUser.setPassword(tempString);
-                                    break;
-                                case 3:
-                                    accountModification("aa", Integer.parseInt(serverInput));
-                                    users.removeIf(n -> currentUser.equals(n));
-                                    endProgram = true;
-                                    break;
-                            }
-                            writer.println(SUCCESS);
-                            writer.flush();
-                            break;
-                        case 2:
-                            tempUserList.removeAll(tempUserList);
-                            tempUserList2.removeAll(tempUserList2);
-                            tempUserList = searchValidUser(reader.readLine());
-                            serverOutput = tempUserList.stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
-                            writer.write(serverOutput);
-                            writer.println();
-                            writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                tempUserList2 = currentUser.getBlockList();
-                                tempUserList2.add(tempUser.get());
-                                currentUser.setBlockList(tempUserList2);
-                                addAction("block",tempUser.get());
-                                writer.write(SUCCESS);
-                            } else {
-                                writer.write(FAIL);
-                            }
-                            writer.println();
-                            writer.flush();
-                            break;
-                        case 1:
-                            tempUserList.removeAll(tempUserList);
-                            tempUserList2.removeAll(tempUserList2);
-                            tempUserList = searchValidUser(reader.readLine());
-                            serverOutput = tempUserList.stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
-                            writer.write(serverOutput);
-                            writer.println();
-                            writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                currentUser.addConversation(tempUser.get());
-                                addAction("chat", tempUser.get());
-                                writer.write(SUCCESS);
-                            } else {
-                                writer.write(FAIL);
-                            }
-                            writer.println();
-                            writer.flush();
-                            break;
-                        case 0:
-                            tempUserList = currentUser.getConversationUser();
-                            serverOutput = currentUser.getConversationUser().stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            if (!tempUserList.isEmpty()) {
-                                writer.println(serverOutput);
-                                writer.flush();
-                                serverInput = reader.readLine();
-                                tempSplit = serverInput.split(",", 2);
-                                tempUser = exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                                if (tempUser.isPresent()) {
-                                    tempReceiver = tempUser.get();
-                                    writer.write(SUCCESS);
-                                    writer.println();
-                                    writer.flush();
-                                    do {
-                                        try {
-                                            serverOutput = displayMessage(
-                                                    currentUser.display50Message(tempReceiver), 50);
-                                            writer.println(serverOutput);
-                                        } catch (NoPreviousMessageException e) {
-                                            writer.println(FAIL);
-                                        }
-                                        writer.flush();
-                                        serverInput = reader.readLine();
-                                        switch (Integer.parseInt(serverInput)) {
-                                            case 0:
-                                                serverInput = reader.readLine();
-                                                if (!tempReceiver.isBlocked(currentUser)) {
-                                                    if (serverInput.contains(".txt")) {
-                                                        currentUser.sendTxtFile(tempReceiver, serverInput);
-                                                        writer.println(SUCCESS);
-                                                    } else {
-                                                        currentUser.createMessage(tempReceiver, serverInput);
-                                                        writer.println(SUCCESS);
-                                                    }
-                                                } else {
-                                                    writer.println("blocked");
-                                                }
-                                                writer.flush();
-                                                break;
-                                            case 1:
-                                                serverInput = reader.readLine();
-                                                tempSplit = serverInput.split(";", 3);
-                                                try {
-                                                    currentUser.editMessage(
-                                                            tempReceiver, tempSplit[0], tempSplit[1], tempSplit[2]);
-                                                } catch (NoMessageFoundException e) {
-                                                    writer.println(e.getMessage());
-                                                    writer.flush();
-                                                }
-                                                writer.println(SUCCESS);
-                                                writer.flush();
-                                                break;
-                                            case 2:
-                                                serverInput = reader.readLine();
-                                                tempSplit = serverInput.split(";", 2);
-                                                try {
-                                                    currentUser.deleteMessage(
-                                                            tempReceiver, tempSplit[0], tempSplit[1]);
-                                                } catch (NoMessageFoundException e) {
-                                                    writer.println(e.getMessage());
-                                                    writer.flush();
-                                                }
-                                                writer.println(SUCCESS);
-                                                writer.flush();
-                                                break;
-                                            case 3:
-                                                conversationOff = true;
-                                                break;
-                                        }
-                                        if (conversationOff) {
-                                            break;
-                                        }
-                                    } while (true);
-                                } else {
-                                    writer.println(FAIL);
-                                    writer.flush();
-                                }
-                                break;
-                            } else {
-                                writer.println("No conversation");
-                                writer.flush();
-                            }
-                    }
-                    if (endProgram) {
-                        break;
-                    }
-                } while (true);
+                }
             }
-        } catch (RuntimeException | SocketException e) {
-            System.out.printf("%s disconnect\n", currentUser.toString());
+            bfr.close();
+        } catch (FileNotFoundException e) {
+            File file = new File("userAction.csv");
+            file.createNewFile();
+        }
+
+        // Start accepting userThread
+        try {
+            ServerSocket serverSocket = new ServerSocket(port);
+            boolean serverRun = true;
+            while (serverRun) {
+                Socket userSocket = serverSocket.accept();
+                Thread userThread = new Thread(new ClientHandler(userSocket));
+                userThread.start();
+            }
+        } catch (IOException e) {
+            System.out.println("Server error");
+            e.printStackTrace();
         }
     }
 }

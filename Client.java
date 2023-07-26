@@ -5,9 +5,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.InputMismatchException;
 import java.util.Scanner;
-import java.util.stream.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Cilent program
@@ -19,7 +19,6 @@ import java.util.stream.*;
  */
 
 public class Client {
-    public static final String MESSAGE_SYSTEM = "MessageSystem";
     public static final String EXIT = "Exiting";
 
     public static void main(String[] args) throws IOException {
@@ -29,20 +28,17 @@ public class Client {
         String userInputString = "";
         boolean error = false;
         boolean seller = false;
-        boolean logOff = false;
-        boolean conversationOff = false;
+        boolean keepOption = true;
+        boolean keepConversation = true;
         String userInfoTemp = "";
         String tempString = "";
         String clientInput = "";
         String clientOutput = "";
-        String[] tempSplit;
         ArrayList<String> userNameList = new ArrayList<>();
         ArrayList<String> userNameList2 = new ArrayList<>();
         ArrayList<String> storeNameList = new ArrayList<>();
         ArrayList<String> conversationList = new ArrayList<>();
         ArrayList<String> messageList = new ArrayList<>();
-        //System.out.println(InetAddress.getLocalHost().getHostName());
-        //System.out.println(InetAddress.getLocalHost().getHostAddress());
 
         // Connect to server
         System.out.println("Establishing connection");
@@ -51,19 +47,23 @@ public class Client {
             System.out.println("Connect successfully");
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter writer = new PrintWriter(socket.getOutputStream());
-
+            String emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+            Pattern emailRegexPattern = Pattern.compile(emailPattern);
+            String namePattern = "^[A-Z][a-z]+\\s[A-Z][a-z]+$";
+            Pattern nameRegexPattern = Pattern.compile(namePattern);
+            Matcher matcher;
             // Start program
             do {
                 do {
                     error = false;
                     System.out.println("Hello! Would you like to use the program? Type 1 for yes, 0 for no.");
                     try {
-                        userInputInt = scan.nextInt();
+                        userInputInt = Integer.parseInt(scan.next());
                         if (userInputInt != 0 && userInputInt != 1) {
                             System.out.println("Invalid input");
                             error = true;
                         }
-                    } catch (IllegalArgumentException | InputMismatchException e) {
+                    } catch (IllegalArgumentException e) {
                         System.out.println("Invalid input");
                         error = true;
                     }
@@ -71,9 +71,14 @@ public class Client {
                 scan.nextLine();
 
                 if (userInputInt == 0) {
+                    writer.println("End system");
+                    writer.flush();
                     System.out.println("Exiting");
                     return;
                 }
+
+                writer.println("Start system");
+                writer.flush();
 
                 // Login page
                 boolean loggedIn = false;
@@ -85,12 +90,12 @@ public class Client {
                         error = false;
                         System.out.println("Do you have an account already? Enter 1 for yes, 0 for no.");
                         try {
-                            userInputInt = scan.nextInt();
+                            userInputInt = Integer.parseInt(scan.next());
                             if (userInputInt != 0 && userInputInt != 1) {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
-                        } catch (IllegalArgumentException | InputMismatchException e) {
+                        } catch (IllegalArgumentException e) {
                             System.out.println("Invalid input");
                             error = true;
                         }
@@ -100,19 +105,19 @@ public class Client {
                     //create account
                     if (userInputInt == 0) {
                         writer.write("Create account");
-                        writer.println();
+
                         writer.flush();
                         userInfoTemp = "";
                         do {
                             error = false;
                             System.out.println("Are you a buyer or a seller? Enter 1 for seller, 0 for buyer");
                             try {
-                                userInputInt = scan.nextInt();
+                                userInputInt = Integer.parseInt(scan.next());
                                 if (userInputInt != 0 && userInputInt != 1) {
                                     System.out.println("Invalid input");
                                     error = true;
                                 }
-                            } catch (IllegalArgumentException | InputMismatchException e) {
+                            } catch (IllegalArgumentException e) {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
@@ -122,14 +127,19 @@ public class Client {
 
                         do {
                             error = false;
-                            System.out.println("What is your email?");
+                            System.out.println("What is your email? ex:[abc@def.ghi]");
                             userInputString = scan.nextLine();
+                            matcher = emailRegexPattern.matcher(userInputString);
                             if (userInputString == null) {
                                 System.out.println(EXIT);
                                 return;
                             }
                             if (userInputString.isEmpty()) {
                                 System.out.println("Email cannot be empty");
+                                error = true;
+                            }
+                            if (!matcher.matches()) {
+                                System.out.println("Invalid email format");
                                 error = true;
                             }
                         } while (error);
@@ -152,8 +162,9 @@ public class Client {
 
                         do {
                             error = false;
-                            System.out.println("What is your name?");
+                            System.out.println("What is your name? ex:[Abc Def]");
                             userInputString = scan.nextLine();
+                            matcher = nameRegexPattern.matcher(userInputString);
                             if (userInputString == null) {
                                 System.out.println(EXIT);
                                 return;
@@ -162,11 +173,15 @@ public class Client {
                                 System.out.println("Name cannot be empty");
                                 error = true;
                             }
+                            if (!matcher.matches()) {
+                                System.out.println();
+                                System.out.println("Invalid name format");
+                                error = true;
+                            }
                         } while (error);
                         userInfoTemp += userInputString;
 
-                        writer.write(userInfoTemp);
-                        writer.println();
+                        writer.println(userInfoTemp);
                         writer.flush();
 
                         clientInput = reader.readLine();
@@ -175,8 +190,7 @@ public class Client {
                         }
                         // log in
                     } else if (userInputInt == 1) {
-                        writer.write("Log in");
-                        writer.println();
+                        writer.println("Log in");
                         writer.flush();
                         userInfoTemp = "";
                         do {
@@ -207,9 +221,7 @@ public class Client {
                             }
                         } while (error);
                         userInfoTemp += userInputString;
-
-                        writer.write(userInfoTemp);
-                        writer.println();
+                        writer.println(userInfoTemp);
                         writer.flush();
 
                         clientInput = reader.readLine();
@@ -219,18 +231,14 @@ public class Client {
                             loggedIn = true;
                         }
                     }
-                    clientOutput = (loggedIn) ? "pass" : "not pass";
-                    writer.write(clientOutput);
-                    writer.println();
-                    writer.flush();
                 } while (!loggedIn);
 
                 do {
                     // Display
                     seller = true;
-                    storeNameList.removeAll(storeNameList);
-                    userNameList.removeAll(userNameList);
-                    userNameList2.removeAll(userNameList2);
+                    storeNameList.clear();
+                    userNameList.clear();
+                    userNameList2.clear();
                     clientInput = reader.readLine();
                     if (clientInput.equals("Customer display")) {
                         seller = false;
@@ -253,6 +261,8 @@ public class Client {
                             .map(String::trim)
                             .forEach(userNameList::add);
                     counter = 0;
+                    clientInput = reader.readLine();
+                    System.out.println("\n" + clientInput);
                     if (!seller) {
                         if (!userNameList2.isEmpty() && !userNameList2.get(0).isEmpty()) {
                             while (counter < userNameList2.size()) {
@@ -264,65 +274,63 @@ public class Client {
                             System.out.println("Server contain no seller");
                         }
                     } else {
-                        System.out.printf("My stores: ");
+                        System.out.print("My stores: ");
 
                         if (storeNameList.isEmpty() || storeNameList.get(0).isEmpty()) {
                             tempString = "None";
                         } else {
-                            tempString = storeNameList.stream().collect(Collectors.joining(","));
+                            tempString = String.join(", ", storeNameList);
                         }
                         System.out.println(tempString);
                     }
-                    System.out.printf("Exist conversation: ");
+                    System.out.print("Exist conversation: ");
                     if (userNameList.isEmpty() || userNameList.get(0).isEmpty()) {
                         tempString = "None";
                     } else {
-                        tempString = userNameList.stream().collect(Collectors.joining(","));
+                        tempString = String.join(", ", userNameList);
                     }
                     System.out.println(tempString);
 
                     // option
                     do {
                         error = false;
-                        System.out.println("Options ->\n0: Select a specific conversation\n" +
+                        System.out.println("\nOptions ->\n0: Select a specific conversation\n" +
                                 "1: Search user to create new conversation\n2: Block any user\n" +
-                                "3: Account Modification\n4: Unblock any user\n5: Invs any user\n" +
-                                "6: UnInvis any user\n" + "7: add store\n8: log off");
+                                "3: Account Modification\n4: Unblock any user\n5: Invisible any user\n" +
+                                "6: Indivisibles any user\n" + "7: add store\n8: log off");
                         try {
-                            userInputInt = scan.nextInt();
+                            userInputInt = Integer.parseInt(scan.next());
                             if (userInputInt < 0 || userInputInt > 8) {
                                 System.out.println("Invalid input");
                                 error = true;
                             }
-                        } catch (IllegalArgumentException | InputMismatchException e) {
+                        } catch (IllegalArgumentException e) {
                             System.out.println("Invalid input");
                             error = true;
                         }
                     } while (error);
                     scan.nextLine();
-                    writer.write(Integer.toString(userInputInt));
-                    writer.println();
+                    writer.println(Integer.toString(userInputInt));
                     writer.flush();
-                    logOff = false;
+                    keepOption = true;
                     switch (userInputInt) {
-                        case 8:
+                        case 8 -> {
                             System.out.println("logging off");
-                            logOff = true;
-                            break;
-                        case 7:
+                            keepOption = false;
+                        }
+                        case 7 -> {
                             clientInput = reader.readLine();
-                            if (clientInput.equals("Not Seller")) {
+                            if (clientInput.equals("Not seller")) {
                                 System.out.println("Your are not a seller");
                             } else {
-                                storeNameList.removeAll(storeNameList);
+                                storeNameList.clear();
                                 clientInput = reader.readLine();
                                 System.out.print("Stores owned: ");
                                 if (!clientInput.isEmpty()) {
                                     Arrays.stream(clientInput.split(";"))
                                             .map(String::trim)
                                             .forEach(storeNameList::add);
-                                    System.out.println(storeNameList.stream()
-                                            .collect(Collectors.joining(";")));
+                                    System.out.println(String.join(";", storeNameList));
                                 } else {
                                     System.out.println("None");
                                 }
@@ -343,17 +351,17 @@ public class Client {
                                 writer.flush();
                                 System.out.println("Successfully added a store");
                             }
-                            break;
-                        case 6:
+                        }
+                        case 6 -> {
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
-                                System.out.println("No user been invis by you");
+                                System.out.println("No user been invisible by you");
                             } else {
-                                userNameList.removeAll(userNameList);
+                                userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
-                                System.out.println("Invis Users:");
+                                System.out.println("Invisible Users:");
                                 counter = 0;
                                 while (counter < userNameList.size()) {
                                     System.out.println(userNameList.get(counter));
@@ -363,7 +371,7 @@ public class Client {
                             do {
                                 error = false;
                                 System.out.println("Enter the user you want to" +
-                                        " uninvis email and name separate with comma ex:email,comma");
+                                        " indivisibles email and name separate with comma ex:email,name");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -378,8 +386,7 @@ public class Client {
                                     error = true;
                                 }
                             } while (error);
-                            writer.write(userInputString);
-                            writer.println();
+                            writer.println(userInputString);
                             writer.flush();
                             clientInput = reader.readLine();
                             if (clientInput.equals("fail")) {
@@ -387,11 +394,11 @@ public class Client {
                             } else {
                                 System.out.println(clientInput);
                             }
-                            break;
-                        case 5:
+                        }
+                        case 5 -> {
                             do {
                                 error = false;
-                                System.out.println("What is the name of the user you want to invis?");
+                                System.out.println("What is the name of the user you want to invisible?");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -402,14 +409,13 @@ public class Client {
                                     error = true;
                                 }
                             } while (error);
-                            writer.write(userInputString);
-                            writer.println();
+                            writer.println(userInputString);
                             writer.flush();
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 System.out.println("No user that contain the name.");
                             } else {
-                                userNameList.removeAll(userNameList);
+                                userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
@@ -422,7 +428,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user you want to" +
-                                            " invis email and name separate with comma ex:email,comma");
+                                            " invisible's email and name separate with comma ex:email,name");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -437,8 +443,7 @@ public class Client {
                                         error = true;
                                     }
                                 } while (error);
-                                writer.write(userInputString);
-                                writer.println();
+                                writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
                                 if (clientInput.equals("fail")) {
@@ -447,13 +452,13 @@ public class Client {
                                     System.out.println(clientInput);
                                 }
                             }
-                            break;
-                        case 4:
+                        }
+                        case 4 -> {
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 System.out.println("No user been blocked by you");
                             } else {
-                                userNameList.removeAll(userNameList);
+                                userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
@@ -467,7 +472,7 @@ public class Client {
                             do {
                                 error = false;
                                 System.out.println("Enter the user you want to" +
-                                        " unblocks email and name separate with comma  ex:email,comma");
+                                        " unblocks email and name separate with comma  ex:email,name");
                                 userInputString = scan.nextLine();
                                 if (userInputString == null) {
                                     System.out.println(EXIT);
@@ -482,8 +487,7 @@ public class Client {
                                     error = true;
                                 }
                             } while (error);
-                            writer.write(userInputString);
-                            writer.println();
+                            writer.println(userInputString);
                             writer.flush();
                             clientInput = reader.readLine();
                             if (clientInput.equals("fail")) {
@@ -491,47 +495,56 @@ public class Client {
                             } else {
                                 System.out.println(clientInput);
                             }
-                            break;
-                        case 3:
+                        }
+                        case 3 -> {
                             do {
                                 error = false;
                                 System.out.println("Options -> 0: Change name; 1:" +
                                         " Change email; 2: Change password; 3: Delete Account");
                                 try {
-                                    userInputInt = scan.nextInt();
+                                    userInputInt = Integer.parseInt(scan.next());
                                     if (userInputInt < 0 || userInputInt > 3) {
                                         System.out.println("Invalid input");
                                         error = true;
                                     }
-                                } catch (IllegalArgumentException | InputMismatchException e) {
+                                } catch (IllegalArgumentException e) {
                                     System.out.println("Invalid input");
                                     error = true;
                                 }
                             } while (error);
                             scan.nextLine();
                             switch (userInputInt) {
-                                case 0:
-                                    tempString = "name";
-                                    break;
-                                case 1:
-                                    tempString = "email";
-                                    break;
-                                case 2:
-                                    tempString = "password";
-                                    break;
-                                case 3:
+                                case 0 -> tempString = "name";
+                                case 1 -> tempString = "email";
+                                case 2 -> tempString = "password";
+                                case 3 -> {
                                     System.out.println("logging off");
-                                    logOff = true;
-                                    break;
+                                    keepOption = false;
+                                }
                             }
-                            writer.write(Integer.toString(userInputInt));
-                            writer.println();
+                            writer.println(Integer.toString(userInputInt));
                             writer.flush();
                             if (userInputInt != 3) {
                                 do {
                                     error = false;
                                     System.out.printf("What is your new %s?\n", tempString);
                                     userInputString = scan.nextLine();
+                                    if (tempString.equals("name") || tempString.equals("email")) {
+                                        if (tempString.equals("name")) {
+                                            matcher = nameRegexPattern.matcher(userInputString);
+                                            if (!matcher.matches()) {
+                                                System.out.println("Invalid name format");
+                                                error = true;
+                                            }
+                                        }
+                                        if (tempString.equals("email")) {
+                                            matcher = emailRegexPattern.matcher(userInputString);
+                                            if (!matcher.matches()) {
+                                                System.out.println("Invalid email format");
+                                                error = true;
+                                            }
+                                        }
+                                    }
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
                                         return;
@@ -550,8 +563,8 @@ public class Client {
                                 clientInput = reader.readLine();
                             }
                             System.out.println(clientInput);
-                            break;
-                        case 2:
+                        }
+                        case 2 -> {
                             do {
                                 error = false;
                                 System.out.println("What is the name of the user you want to block?");
@@ -565,14 +578,13 @@ public class Client {
                                     error = true;
                                 }
                             } while (error);
-                            writer.write(userInputString);
-                            writer.println();
+                            writer.println(userInputString);
                             writer.flush();
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 System.out.println("No user that contain the name.");
                             } else {
-                                userNameList.removeAll(userNameList);
+                                userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
@@ -585,7 +597,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user you want to" +
-                                            " block's email and name separate with comma ex:email,comma");
+                                            " block's email and name separate with comma ex:email,name");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -600,8 +612,8 @@ public class Client {
                                         error = true;
                                     }
                                 } while (error);
-                                writer.write(userInputString);
-                                writer.println();
+                                writer.println(userInputString);
+
                                 writer.flush();
                                 clientInput = reader.readLine();
                                 if (clientInput.equals("fail")) {
@@ -610,8 +622,8 @@ public class Client {
                                     System.out.println(clientInput);
                                 }
                             }
-                            break;
-                        case 1:
+                        }
+                        case 1 -> {
                             do {
                                 error = false;
                                 System.out.println("What is the name of the user you want" +
@@ -626,14 +638,13 @@ public class Client {
                                     error = true;
                                 }
                             } while (error);
-                            writer.write(userInputString);
-                            writer.println();
+                            writer.println(userInputString);
                             writer.flush();
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 System.out.println("No user that contain the name.");
                             } else {
-                                userNameList.removeAll(userNameList);
+                                userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
@@ -646,7 +657,7 @@ public class Client {
                                 do {
                                     error = false;
                                     System.out.println("Enter the user's email and name separate with comma " +
-                                            "to create new conversation ex:email,comma");
+                                            "to create new conversation ex:email,name");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -661,8 +672,7 @@ public class Client {
                                         error = true;
                                     }
                                 } while (error);
-                                writer.write(userInputString);
-                                writer.println();
+                                writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
                                 if (clientInput.equals("fail")) {
@@ -671,20 +681,20 @@ public class Client {
                                     System.out.println(clientInput);
                                 }
                             }
-                            break;
-                        case 0:
+                        }
+                        case 0 -> {
                             clientInput = reader.readLine();
                             if (!clientInput.equals("No conversation")) {
-                                conversationList.removeAll(conversationList);
+                                conversationList.clear();
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(conversationList::add);
                                 System.out.println("Conversation users:");
-                                conversationList.forEach(n -> System.out.println(n));
+                                conversationList.forEach(System.out::println);
                                 do {
                                     error = false;
                                     System.out.println("Enter the user's email and name separate with comma " +
-                                            "to enter conversation ex:email,comma");
+                                            "to enter conversation ex:email,name");
                                     userInputString = scan.nextLine();
                                     if (userInputString == null) {
                                         System.out.println(EXIT);
@@ -699,47 +709,45 @@ public class Client {
                                         error = true;
                                     }
                                 } while (error);
-                                writer.write(userInputString);
-                                writer.println();
+                                writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
                                 if (clientInput.equals("fail")) {
                                     System.out.println("Incorrect email and name");
                                 } else {
                                     do {
-                                        conversationOff = false;
+                                        keepConversation = true;
                                         clientInput = reader.readLine();
                                         if (clientInput.equals("fail")) {
                                             System.out.println("No message");
                                         } else {
-                                            messageList.removeAll(messageList);
+                                            messageList.clear();
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
                                                     .forEach(messageList::add);
                                             System.out.println("Messages:");
-                                            messageList.forEach(n -> System.out.println(n));
+                                            messageList.forEach(System.out::println);
                                         }
                                         do {
                                             error = false;
                                             System.out.println("Options -> 0: New message; " +
                                                     "1: Edit Message; 2: deleteMessage; 3: exit conversation");
                                             try {
-                                                userInputInt = scan.nextInt();
+                                                userInputInt = Integer.parseInt(scan.next());
                                                 if (userInputInt < 0 || userInputInt > 3) {
                                                     System.out.println("Invalid input");
                                                     error = true;
                                                 }
-                                            } catch (IllegalArgumentException | InputMismatchException e) {
+                                            } catch (IllegalArgumentException e) {
                                                 System.out.println("Invalid input");
                                                 error = true;
                                             }
                                         } while (error);
                                         scan.nextLine();
-                                        writer.write(Integer.toString(userInputInt));
-                                        writer.println();
+                                        writer.println(Integer.toString(userInputInt));
                                         writer.flush();
                                         switch (userInputInt) {
-                                            case 0:
+                                            case 0 -> {
                                                 do {
                                                     error = false;
                                                     System.out.println("New message content");
@@ -753,16 +761,15 @@ public class Client {
                                                         error = true;
                                                     }
                                                 } while (error);
-                                                writer.write(userInputString);
-                                                writer.println();
+                                                writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
                                                 if (clientInput.equals("blocked")) {
                                                     System.out.println("You are blocked by receiver," +
                                                             " cannot send message");
                                                 }
-                                                break;
-                                            case 1:
+                                            }
+                                            case 1 -> {
                                                 do {
                                                     error = false;
                                                     System.out.println("Enter the old message, time," +
@@ -782,15 +789,14 @@ public class Client {
                                                         error = true;
                                                     }
                                                 } while (error);
-                                                writer.write(userInputString);
-                                                writer.println();
+                                                writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
                                                 if (clientInput.equals("Message not found")) {
                                                     System.out.println("Input message not found");
                                                 }
-                                                break;
-                                            case 2:
+                                            }
+                                            case 2 -> {
                                                 do {
                                                     error = false;
                                                     System.out.println("Enter the time and" +
@@ -810,33 +816,27 @@ public class Client {
                                                         error = true;
                                                     }
                                                 } while (error);
-                                                writer.write(userInputString);
-                                                writer.println();
+                                                writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
                                                 if (clientInput.equals("Message not found")) {
                                                     System.out.println("Input message not found");
                                                 }
-                                                break;
-                                            case 3:
+                                            }
+                                            case 3 -> {
                                                 System.out.println("Exit conversation");
-                                                conversationOff = true;
-                                                break;
+                                                keepConversation = false;
+                                            }
                                         }
-                                        if (conversationOff) {
-                                            break;
-                                        }
-                                    } while (true);
+                                    } while (keepConversation);
                                 }
                             } else {
                                 System.out.println("You have no exist conversation," +
                                         " please add new user to make conversation");
                             }
+                        }
                     }
-                    if (logOff) {
-                        break;
-                    }
-                } while (true);
+                } while (keepOption);
             } while (true);
         } catch (UnknownHostException | SocketException e) {
             System.out.println("Given host name and port number cannot" +
