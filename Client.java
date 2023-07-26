@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Cilent program
  *
- * Purdue University -- CS18000 -- Spring 2022 -- Project 4
+ * Purdue University -- CS18000 -- Spring 2022 -- Project 5
  *
  * @author William Yu, yuwl; Lamiya Laxmidhar, llaxmidh; Mohnish Harwani, mharwan; Ben Hartley, hartleyb;
  * @version July 22, 2023
@@ -31,6 +31,9 @@ public class Client {
     public static final Pattern editMessagePattern = Pattern.compile(editMessageFormat);
     public static final String deleteMessageFormat = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
     public static final Pattern deleteMessagePattern = Pattern.compile(deleteMessageFormat);
+
+    // assume the dumbest user possible, 01
+    // name check 1 space
 
     public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
@@ -94,11 +97,11 @@ public class Client {
                 writer.flush();
 
                 // Login page
-                boolean loggedIn = false;
+                boolean notloggedIn;
 
                 do {
                     // login page
-                    loggedIn = false;
+                    notloggedIn = true;
                     do {
                         error = false;
                         System.out.println("Do you have an account already? Enter 1 for yes, 0 for no.");
@@ -117,8 +120,7 @@ public class Client {
 
                     //create account
                     if (userInputInt == 0) {
-                        writer.write("Create account");
-
+                        writer.println("Create account");
                         writer.flush();
                         userInfoTemp = "";
                         do {
@@ -187,17 +189,16 @@ public class Client {
                                 error = true;
                             }
                             if (!matcher.matches()) {
-                                System.out.println();
                                 System.out.println("Invalid name format");
                                 error = true;
                             }
                         } while (error);
                         userInfoTemp += userInputString;
-
                         writer.println(userInfoTemp);
                         writer.flush();
 
                         clientInput = reader.readLine();
+                        System.out.println(clientInput);
                         if (clientInput.equals("User Already exist")) {
                             System.out.println(clientOutput);
                         }
@@ -241,10 +242,10 @@ public class Client {
                         if (clientInput.equals("fail")) {
                             System.out.println("Invalid email or password");
                         } else {
-                            loggedIn = true;
+                            notloggedIn = false;
                         }
                     }
-                } while (!loggedIn);
+                } while (notloggedIn);
 
                 do {
                     // Display

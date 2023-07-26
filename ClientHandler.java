@@ -28,25 +28,25 @@ public class ClientHandler implements Runnable{
         try {
             //read previous User data
             Optional<User> tempUser;
+            BufferedReader reader = new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
+            PrintWriter writer = new PrintWriter(userSocket.getOutputStream());
+            ArrayList<User> tempUserList = new ArrayList<>();
+            ArrayList<User> tempUserList2 = new ArrayList<>();
+            User tempReceiver;
+            String tempString = "";
+            String serverInput = "";
+            String serverOutput = "";
+            String[] tempSplit;
 
             while (true) {
                 // Server login
-                BufferedReader reader = new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
-                PrintWriter writer = new PrintWriter(userSocket.getOutputStream());
-                ArrayList<User> tempUserList = new ArrayList<>();
-                ArrayList<User> tempUserList2 = new ArrayList<>();
-                User tempReceiver;
-                String tempString = "";
-                String serverInput = "";
-                String serverOutput = "";
-                String[] tempSplit;
-
                 serverInput = reader.readLine();
                 if (serverInput.equals("End system")) {
                     break;
                 }
-                boolean loggedin = false;
+                boolean notloggedin;
                 do {
+                    notloggedin = true;
                     serverInput = reader.readLine();
                     if (serverInput.equals("Create account")) {
                         try {
@@ -67,14 +67,14 @@ public class ClientHandler implements Runnable{
                         if (tempUser.isPresent()) {
                             currentUser = tempUser.get();
                             writer.println(SUCCESS);
-                            loggedin = false;
+                            notloggedin = false;
                         } else {
                             writer.println(FAIL);
-                            loggedin = true;
+                            notloggedin = true;
                         }
                         writer.flush();
                     }
-                } while (loggedin);
+                } while (notloggedin);
                 boolean seller = currentUser.isUserType();
 
                 boolean keepProgram = true;
