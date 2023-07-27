@@ -1,1 +1,54 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+public class StartPageNew implements Runnable {
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(new StartPageNew());
+    }
+
+    @Override
+    public void run() {
+        JFrame frame = new JFrame("Message Sender");
+        JPanel panel = new JPanel(new GridBagLayout());
+
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+
+        // JLabel username = new JLabel("Recipient:");
+        // panel.add(username, gridBagConstraints);
+
+        JTextField recipientText = new JTextField(40);
+        gridBagConstraints.gridx = 1;
+        //panel.add(recipientText, gridBagConstraints);
+
+        JButton[] messageButtons = new JButton[8];
+
+        for (int i = 0; i < messageButtons.length; i++) {
+            messageButtons[i] = new JButton("Message " + (i + 1));
+            gridBagConstraints.gridx = 0;
+            gridBagConstraints.gridy = i + 1;
+            panel.add(messageButtons[i], gridBagConstraints);
+        }
+
+        frame.add(panel);
+        frame.setSize(800, 800);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        for (int i = 0; i < messageButtons.length; i++) {
+            int messageNumber = i + 1;
+            messageButtons[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String recipient = recipientText.getText();
+                    String message = "Message " + messageNumber + ": Hello, " + recipient + "!";
+                    JOptionPane.showMessageDialog(frame, message);
+                }
+            });
+        }
+    }
+}
