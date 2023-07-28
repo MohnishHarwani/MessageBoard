@@ -52,8 +52,11 @@ public class ClientHandler implements Runnable{
                         try {
                             serverInput = reader.readLine();
                             tempSplit = serverInput.split(",", 4);
+                            currentUser = new User(
+                                    Boolean.parseBoolean(tempSplit[0]), tempSplit[1], tempSplit[2], tempSplit[3]);
                             Server.addUser(new User(
                                     Boolean.parseBoolean(tempSplit[0]), tempSplit[1], tempSplit[2], tempSplit[3]));
+                            notloggedin = false;
                             writer.println(SUCCESS);
                             writer.flush();
                         } catch (UserExistException e) {

@@ -1,4 +1,8 @@
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -23,7 +27,7 @@ public class Client {
     public static final String EXIT = "Exiting";
     public static final String emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     public static final Pattern emailRegexPattern = Pattern.compile(emailPattern);
-    public static final String namePattern = "^[A-Z][a-z]+\\s[A-Z][a-z]+$";
+    public static final String namePattern = "[A-Z][a-zA-Z]*";
     public static final Pattern nameRegexPattern = Pattern.compile(namePattern);
     public static final String emailCommaName = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}" +
             "\\b,\\s*\\p{Lu}\\p{L}+\\s+\\p{Lu}\\p{L}+";
@@ -33,13 +37,209 @@ public class Client {
     public static final String deleteMessageFormat = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
     public static final Pattern deleteMessagePattern = Pattern.compile(deleteMessageFormat);
     public static final String GUI_TITLE = "Messager";
-
-    // assume the dumbest user possible, 01
-    // name check 1 space
+    public static final Object lock = new Object();
+    public static String GuiPass = new String( );
 
     public static void endProgramDialog() {
         JOptionPane.showMessageDialog(null, "Thank you for using Messenger!",
                 "Exiting", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void createAccountPage() {
+        final int[] roleOutput = {0};
+        ArrayList<String> info = new ArrayList<String>();
+        int line = 0;
+        JFrame frame = new JFrame("Create Account");
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel email = new JLabel("Email: ");
+        panel.add(email, gridBagConstraints);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        JTextField emailText = new JTextField("", 20);
+        panel.add(emailText, gridBagConstraints);
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel password = new JLabel("Password: ");
+        panel.add(password, gridBagConstraints);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        JTextField passwordText = new JTextField(20);
+        panel.add(passwordText, gridBagConstraints);
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel role = new JLabel("Role Menu:");
+        panel.add(role, gridBagConstraints);
+        JMenuBar roleBar = new JMenuBar();
+        JMenu roleMenu = new JMenu("Buyer");
+        roleMenu.setFont(new Font("Arial", Font.BOLD, 13));
+        roleMenu.setForeground(Color.RED);
+        JMenuItem buyerItem = new JMenuItem("Buyer");
+        JMenuItem sellerItem = new JMenuItem("Seller");
+        roleMenu.add(buyerItem);
+        roleMenu.add(sellerItem);
+        roleBar.add(roleMenu);
+        panel.add(roleBar, gridBagConstraints);
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel name = new JLabel("Name: ");
+        panel.add(name, gridBagConstraints);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        JTextField nameText = new JTextField(20);
+        panel.add(nameText, gridBagConstraints);
+
+        JButton confirm = new JButton("Confirm");
+        gridBagConstraints.gridy = line;
+        panel.add(confirm, gridBagConstraints);
+
+        buyerItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                roleOutput[0] = 0;
+                changeMenuText(roleMenu, "Buyer");
+                updateMenuBarAppearance(roleBar, Color.RED, Font.BOLD);
+            }
+        });
+
+        sellerItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                roleOutput[0] = 1;
+                changeMenuText(roleMenu, "Seller");
+                updateMenuBarAppearance(roleBar, Color.BLUE, Font.BOLD);
+            }
+        });
+
+        confirm.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                synchronized (lock) {
+                    info.clear();
+                    info.add(emailText.getText());
+                    info.add(passwordText.getText());
+                    info.add(nameText.getText());
+                    if (info.stream().noneMatch(String::isEmpty)) {
+                        if (createAccountCheck(info).isEmpty()) {
+                            GuiPass = new String((roleOutput[0] == 1) ? "true" : "false" + "," + info.get(0)
+                                    + "," + info.get(1) + "," + info.get(2));
+
+                            lock.notify();
+                            frame.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(null, String.join("\n",
+                                    createAccountCheck(info)), "Errors Found", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Please fill all information",
+                                "Errors Found", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        frame.add(panel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
+    private static void updateMenuBarAppearance(JMenuBar menuBar, Color color, int style) {
+        for (int i = 0; i < menuBar.getMenuCount(); i++) {
+            JMenu menu = menuBar.getMenu(i);
+            menu.setFont(new Font(menu.getFont().getName(), style, menu.getFont().getSize()));
+            menu.setForeground(color);
+        }
+    }
+
+    private static void changeMenuText(JMenu menu, String newText) {
+        menu.setText(newText);
+    }
+
+    public static void loginPage() {
+        ArrayList<String> info = new ArrayList<String>();
+        int line = 0;
+        JFrame frame = new JFrame("Log in");
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel email = new JLabel("Email: ");
+        panel.add(email, gridBagConstraints);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        JTextField emailText = new JTextField("", 20);
+        panel.add(emailText, gridBagConstraints);
+
+        gridBagConstraints.anchor = GridBagConstraints.LINE_START;
+        gridBagConstraints.gridy = line++;
+        JLabel password = new JLabel("Password: ");
+        panel.add(password, gridBagConstraints);
+        gridBagConstraints.anchor = GridBagConstraints.LINE_END;
+        JTextField passwordText = new JTextField(20);
+        panel.add(passwordText, gridBagConstraints);
+
+        JButton confirm = new JButton("Confirm");
+        gridBagConstraints.gridy = line;
+        panel.add(confirm, gridBagConstraints);
+
+        confirm.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                synchronized (lock) {
+                    info.clear();
+                    info.add(emailText.getText());
+                    info.add(passwordText.getText());
+                    if (info.stream().noneMatch(String::isEmpty)) {
+                        if (loginCheck(info).isEmpty()) {
+                            GuiPass = new String(String.join(",", info));
+                            lock.notify();
+                            frame.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(null, String.join("\n", loginCheck(info)),
+                                    "Errors Found", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Please fill all information",
+                                "Errors Found", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        frame.add(panel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+        // SAVE BUTTON LISTENER
+    }
+
+    public static ArrayList<String> loginCheck(ArrayList<String> info) {
+        ArrayList<String> errorList = new ArrayList<>();
+        if (!emailRegexPattern.matcher(info.get(0)).matches()) {
+            errorList.add("Invalid email format");
+        }
+        return errorList;
+    }
+
+    public static ArrayList<String> createAccountCheck(ArrayList<String> info) {
+        int line = 0;
+        ArrayList<String> errorList = new ArrayList<>();
+        if (!emailRegexPattern.matcher(info.get(line++)).matches()) {
+            errorList.add("Invalid email format");
+        }
+        String tempString = info.get(++line);
+        if (!Arrays.stream(tempString.split("\\s+")).
+                allMatch(word -> word.matches(namePattern))) {
+            errorList.add("Invalid name format." +
+                    " Name need to have every part's first letter uppercase");
+        }
+        return errorList;
     }
 
     public static void main(String[] args) throws IOException {
@@ -60,12 +260,16 @@ public class Client {
         ArrayList<String> storeNameList = new ArrayList<>();
         ArrayList<String> conversationList = new ArrayList<>();
         ArrayList<String> messageList = new ArrayList<>();
+        ArrayList<String> infoList = new ArrayList<>();
+        ArrayList<String> errorList = new ArrayList<>();
 
         // Connect to server
-        System.out.println("Establishing connection");
+        JOptionPane.showMessageDialog(null, "Establishing connection",
+                "Connecting", JOptionPane.INFORMATION_MESSAGE);
         try {
             Socket socket = new Socket(InetAddress.getLocalHost().getHostName(), 4242);
-            System.out.println("Connect successfully");
+            JOptionPane.showMessageDialog(null, "Connect successfully",
+                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter writer = new PrintWriter(socket.getOutputStream());
 
@@ -73,14 +277,12 @@ public class Client {
             // Start program
             do {
                 userInputInt = -1;
-                userInputInt = JOptionPane.showConfirmDialog(null, "Hello! Would you like to use the program?"
-                        , GUI_TITLE, JOptionPane.YES_NO_OPTION);
-                System.out.println(userInputInt);
+                userInputInt = JOptionPane.showConfirmDialog(null,
+                        "Hello! Would you like to use the program?", GUI_TITLE, JOptionPane.YES_NO_OPTION);
                 if (userInputInt == -1 || userInputInt == 1) {
                     endProgramDialog();
                     return;
                 }
-
                 writer.println("Start system");
                 writer.flush();
 
@@ -88,150 +290,51 @@ public class Client {
                 boolean notloggedIn;
 
                 do {
+                    String[] buttonOptions = {"Log in", "Create account"};
+                    userInputInt = -1;
+                    userInputInt = JOptionPane.showOptionDialog(null, "Choose an option:",
+                            "Two-Button Dialog", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                            null, buttonOptions, buttonOptions[0]
+                    );
                     // login page
+                    if (userInputInt == -1) {
+                        endProgramDialog();
+                        return;
+                    }
                     notloggedIn = true;
-                    do {
-                        error = false;
-                        System.out.println("Do you have an account already? Enter 1 for yes, 0 for no.");
-                        try {
-                            userInputInt = Integer.parseInt(scan.next());
-                            if (userInputInt != 0 && userInputInt != 1) {
-                                System.out.println("Invalid input");
-                                error = true;
-                            }
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Invalid input");
-                            error = true;
-                        }
-                    } while (error);
-                    scan.nextLine();
 
-                    //create account
-                    if (userInputInt == 0) {
+                    error = false;
+                    int line = 0;
+                    errorList.clear();
+                    if (userInputInt == 1) {
+                        //create account
                         writer.println("Create account");
                         writer.flush();
-                        userInfoTemp = "";
-                        do {
-                            error = false;
-                            System.out.println("Are you a buyer or a seller? Enter 1 for seller, 0 for buyer");
-                            try {
-                                userInputInt = Integer.parseInt(scan.next());
-                                if (userInputInt != 0 && userInputInt != 1) {
-                                    System.out.println("Invalid input");
-                                    error = true;
-                                }
-                            } catch (IllegalArgumentException e) {
-                                System.out.println("Invalid input");
-                                error = true;
-                            }
-                        } while (error);
-                        scan.nextLine();
-                        userInfoTemp += (userInputInt == 1) ? "true," : "false,";
-
-                        do {
-                            error = false;
-                            System.out.println("What is your email? ex:[abc@def.ghi]");
-                            userInputString = scan.nextLine();
-                            matcher = emailRegexPattern.matcher(userInputString);
-                            if (userInputString == null) {
-                                System.out.println(EXIT);
-                                return;
-                            }
-                            if (userInputString.isEmpty()) {
-                                System.out.println("Email cannot be empty");
-                                error = true;
-                            }
-                            if (!matcher.matches()) {
-                                System.out.println("Invalid email format");
-                                error = true;
-                            }
-                        } while (error);
-                        userInfoTemp += userInputString + ",";
-
-                        do {
-                            error = false;
-                            System.out.println("What is your password?");
-                            userInputString = scan.nextLine();
-                            if (userInputString == null) {
-                                System.out.println(EXIT);
-                                return;
-                            }
-                            if (userInputString.isEmpty()) {
-                                System.out.println("Password cannot be empty");
-                                error = true;
-                            }
-                        } while (error);
-                        userInfoTemp += userInputString + ",";
-
-                        do {
-                            error = false;
-                            System.out.println("What is your name? ex:[Abc Def]");
-                            userInputString = scan.nextLine();
-                            matcher = nameRegexPattern.matcher(userInputString);
-                            if (userInputString == null) {
-                                System.out.println(EXIT);
-                                return;
-                            }
-                            if (userInputString.isEmpty()) {
-                                System.out.println("Name cannot be empty");
-                                error = true;
-                            }
-                            if (!matcher.matches()) {
-                                System.out.println("Invalid name format");
-                                error = true;
-                            }
-                        } while (error);
-                        userInfoTemp += userInputString;
-                        writer.println(userInfoTemp);
-                        writer.flush();
-
-                        clientInput = reader.readLine();
-                        System.out.println(clientInput);
-                        if (clientInput.equals("User Already exist")) {
-                            System.out.println(clientOutput);
-                        }
+                        SwingUtilities.invokeLater(Client::createAccountPage);
+                    } else if (userInputInt == 0) {
                         // log in
-                    } else if (userInputInt == 1) {
                         writer.println("Log in");
                         writer.flush();
-                        userInfoTemp = "";
-                        do {
-                            error = false;
-                            System.out.println("What is your email?");
-                            userInputString = scan.nextLine();
-                            if (userInputString == null) {
-                                System.out.println(EXIT);
-                                return;
-                            }
-                            if (userInputString.isEmpty()) {
-                                System.out.println("email cannot be empty");
-                                error = true;
-                            }
-                        } while (error);
-                        userInfoTemp += userInputString + ",";
-                        do {
-                            error = false;
-                            System.out.println("What is your password?");
-                            userInputString = scan.nextLine();
-                            if (userInputString == null) {
-                                System.out.println(EXIT);
-                                return;
-                            }
-                            if (userInputString.isEmpty()) {
-                                System.out.println("Password cannot be empty");
-                                error = true;
-                            }
-                        } while (error);
-                        userInfoTemp += userInputString;
-                        writer.println(userInfoTemp);
-                        writer.flush();
-
-                        clientInput = reader.readLine();
-                        if (clientInput.equals("fail")) {
-                            System.out.println("Invalid email or password");
-                        } else {
-                            notloggedIn = false;
+                        SwingUtilities.invokeLater(Client::loginPage);
+                    }
+                    synchronized (lock) {
+                        try {
+                            lock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
+                    }
+                    writer.println(GuiPass);
+                    writer.flush();
+
+                    clientInput = reader.readLine();
+                    if (clientInput.equals("fail")) {
+                        JOptionPane.showMessageDialog(null, "Invalid email or password",
+                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Successfully logged in",
+                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                        notloggedIn = false;
                     }
                 } while (notloggedIn);
 
