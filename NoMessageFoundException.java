@@ -1,5 +1,5 @@
 /**
- * User Exist Exception
+ * No Message Found Exception
  *
  * Purdue University -- CS18000 -- Spring 2022 -- Project 4
  *
@@ -7,8 +7,8 @@
  * @version July 22, 2023
  */
 
-public class UserExistException extends Exception {
-    public UserExistException(String message) {
+public class NoMessageFoundException extends Exception {
+    public NoMessageFoundException(String message) {
         super(message);
     }
 }

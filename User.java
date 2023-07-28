@@ -1,12 +1,20 @@
-import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.util.ArrayList;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 
+/**
+ * User program
+ *
+ * Purdue University -- CS18000 -- Spring 2022 -- Project 4
+ *
+ * @author William Yu, yuwl; Lamiya Laxmidhar, llaxmidh; Mohnish Harwani, mharwan; Ben Hartley, hartleyb;
+ * @version July 22, 2023
+ */
+
 public class User extends Thread {
-    private boolean userType; // true = seller, false = customer
+    private boolean userType;
     private String password;
     private String email;
     private String nameOfUser;
@@ -20,6 +28,10 @@ public class User extends Thread {
         this.password = password;
         this.nameOfUser = nameOfUser;
         this.email = email;
+        this.storeName = new ArrayList<String>();
+        this.conversationUser = new ArrayList<User>();
+        this.blockList = new ArrayList<User>();
+        this.invisibleList = new ArrayList<User>();
     }
 
     public String getNameOfUser() {
@@ -38,7 +50,7 @@ public class User extends Thread {
         return email;
     }
 
-    public void setNameOfUser(String nameOfUser) {this.nameOfUser = nameOfUser;}
+    public void setNameOfUser(String nameOfUser) { this.nameOfUser = nameOfUser; }
 
     public void setUserType(boolean userType) {
         this.userType = userType;
@@ -52,30 +64,50 @@ public class User extends Thread {
         this.email = email;
     }
 
-    public ArrayList<User> getConversationUser() { return getConversationUser(); }
+    public ArrayList<User> getConversationUser() { return conversationUser; }
 
-    public ArrayList<String> setStoreName() {return storeName;}
+    public void setConversationUser(ArrayList<User> conversationUser) { this.conversationUser = conversationUser; }
 
-    public ArrayList<String> getStoreName() {return storeName;}
+    public ArrayList<String> getStoreName() { return storeName; }
 
-    public ArrayList<User> getBlockList() {return blockList;}
-    public void setBlockList(ArrayList<User> blockList) {this.blockList = blockList;}
+    public void setStoreName(ArrayList<String> storeName) { this.storeName = storeName; }
 
-    public ArrayList<User> getInvisibleList() {return invisibleList;}
+    public ArrayList<User> getBlockList() { return blockList; }
 
-    public void setInvisibleList(ArrayList<User> invisibleList) {this.invisibleList = invisibleList;}
+    public void setBlockList(ArrayList<User> blockList) { this.blockList = blockList; }
 
+    public ArrayList<User> getInvisibleList() { return invisibleList; }
+
+    public void setInvisibleList(ArrayList<User> invisibleList) { this.invisibleList = invisibleList; }
+
+    public void addStore(String singleStoreName) { this.storeName.add(singleStoreName); }
+
+    public void addConvUser(User user) {
+        this.conversationUser.add(user);
+    }
+
+    public void addBlockUser(User user) {
+        this.blockList.add(user);
+    }
+
+    public void addInvis(User user) {
+        this.invisibleList.add(user);
+    }
+
+    public boolean isTalked(User receiver) {
+        return conversationUser.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
+    }
     public boolean isBlocked(User receiver) {
-        return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver)); // checking if receiver is in block list
+        return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
     }
     public boolean isInvisible(User receiver) {
-        return invisibleList.stream().anyMatch(invUser -> invUser.equals(receiver)); // checking if receiver is in invisible list
+        return invisibleList.stream().anyMatch(invUser -> invUser.equals(receiver));
     }
 
     public boolean addConversation(User receiver) {
         boolean containsName = false;
 
-        containsName = conversationUser.stream().anyMatch(validUser -> validUser.equals(receiver)); // check if receiver is in conversation list
+        containsName = conversationUser.stream().anyMatch(validUser -> validUser.equals(receiver));
 
         if (!containsName) {
             File file = new File(String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser()));
@@ -85,6 +117,7 @@ public class User extends Thread {
     }
 
     public void createMessage(User receiver, String message) {
+        message = commaReplaceFile(message);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
         try {
@@ -102,11 +135,10 @@ public class User extends Thread {
                     previousMessage.add(scan.nextLine());
                 }
                 previousMessage.add(tempMessage);
-                PrintWriter fileWriter = new PrintWriter(senderFile);
-                previousMessage.forEach((n) -> { // print all previous message in to the file
-                    fileWriter.print(n + "\n");
-                });
-                fileWriter.close();
+
+                PrintWriter pw = new PrintWriter(senderFile);
+                previousMessage.forEach((n -> pw.printf(n + "\n")));
+                pw.close();
             } else {
                 PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv",
                         this.nameOfUser, receiver.getNameOfUser()));
@@ -122,14 +154,12 @@ public class User extends Thread {
                     previousMessage.add(scan.nextLine());
                 }
                 previousMessage.add(tempMessage);
-                PrintWriter fileWriter = new PrintWriter(receiverFile);
-                previousMessage.forEach((n) -> { // print all previous message in to the file
-                    fileWriter.print(n + "\n");
-                });
-                fileWriter.close();
+
+                PrintWriter pw = new PrintWriter(receiverFile);
+                previousMessage.forEach((n -> pw.printf(n + "\n")));
+                pw.close();
             } else {
-                PrintWriter fileWriter = new PrintWriter(String.format("%s_%s.csv",
-                        this.nameOfUser, receiver.getNameOfUser()));
+                PrintWriter fileWriter = new PrintWriter(receiverAddress);
                 fileWriter.println(tempMessage);
                 fileWriter.close();
             }
@@ -140,6 +170,8 @@ public class User extends Thread {
 
     public void editMessage(User receiver, String oldMessage, String time
             , String newMessage) throws NoMessageFoundException {
+        oldMessage = commaReplaceFile(oldMessage);
+        newMessage = commaReplaceFile(newMessage);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         String receiverAddress = String.format("%s_%s.csv", receiver.getNameOfUser(), this.nameOfUser);
         boolean noMessageFound = true;
@@ -167,7 +199,7 @@ public class User extends Thread {
             }
             bfr.close();
             PrintWriter pw = new PrintWriter(senderAddress);
-            data.forEach((n) -> { pw.print(n + "\n"); }); // print all previous message in to the file
+            data.forEach((n) -> pw.print(n + "\n")); // print all previous message in to the file
             pw.close();
 
             // receiver file
@@ -179,7 +211,7 @@ public class User extends Thread {
             while (bfr2.ready()) {
                 temp = bfr2.readLine();
                 messageDecomp = temp.split(",", 4);
-                if (messageDecomp[3].contains(oldMessage) && time.equals(messageDecomp[2])) {
+                if (messageDecomp[3].equals(oldMessage) && time.equals(messageDecomp[2])) {
                     messageDecomp[3] = messageDecomp[3].replace(oldMessage, newMessage);
                 }
 
@@ -190,7 +222,7 @@ public class User extends Thread {
             bfr2.close();
 
             PrintWriter pw2 = new PrintWriter(receiverAddress);
-            data.forEach((n) -> { pw2.print(n + "\n"); }); // print all previous message in to the file
+            data.forEach((n) -> pw2.print(n + "\n")); // print all previous message in to the file
 
             pw2.close();
 
@@ -203,6 +235,7 @@ public class User extends Thread {
     }
 
     public void deleteMessage(User receiver, String time, String message) throws NoMessageFoundException {
+        message = commaReplaceFile(message);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
         ArrayList<String[]> messages = new ArrayList<>();
@@ -221,8 +254,6 @@ public class User extends Thread {
         ArrayList<String[]> updatedMessages = new ArrayList<>();
 
         for (String[] n : messages) {
-            System.out.print(n[2].equals(time) + " ");
-            System.out.println(n[3].equals(message));
             if (!n[3].equals(message) || !n[2].equals(time)) {
                 updatedMessages.add(n);
             }
@@ -245,27 +276,35 @@ public class User extends Thread {
         }
     }
 
-    public ArrayList<String[]> display50Message(User receiver){
+    public ArrayList<String[]> display50Message(User receiver) throws NoPreviousMessageException {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
         ArrayList<String[]> messages = new ArrayList<>();
         boolean noMessageFound = true;
-        try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.substring(0, line.indexOf(",") + 1);
-                String[] messageData = line.split(",", 3);
-                messages.add(messageData);
+        String tempString;
+        if (senderFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = line.substring(line.indexOf(",") + 1);
+                    String[] messageData = line.split(",", 3);
+                    messageData[2] = commaReplaceDisplay(messageData[2]);
+                    tempString = messageData[1];
+                    messageData[1] = messageData[0];
+                    messageData[0] = tempString;
+                    messages.add(messageData);
+                }
+            } catch (IOException e) {
+                throw new NoPreviousMessageException("No message");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        if (messages.size() > 50) {
-            int elementsToRemove = messages.size() - 50;
-            messages.subList(0, elementsToRemove).clear();
+            if (messages.size() > 50) {
+                int elementsToRemove = messages.size() - 50;
+                messages.subList(0, elementsToRemove).clear();
+            }
+        } else {
+            throw new NoPreviousMessageException("No message");
         }
-
         return messages;
     }
 
@@ -278,13 +317,23 @@ public class User extends Thread {
             while ((line = reader.readLine()) != null) {
                 fileMessages.add(line);
             }
-            fileMessages.forEach( n -> createMessage(receiver,n)); // for each element in fileMessage, use createMessage method
+            fileMessages.forEach( n -> createMessage(receiver, n));
         } catch (FileNotFoundException e) {
             throw new FileNotFoundException("Invalid address");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public String commaReplaceFile(String message) {
+        return message.replaceAll(",","---");
+    }
+
+    public String commaReplaceDisplay(String message) {
+        return message.replaceAll("---",",");
+    }
+
+    public String toString() {
+        return this.email + "-" + this.nameOfUser;
+    }
 }
-
-
