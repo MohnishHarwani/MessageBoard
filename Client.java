@@ -25,20 +25,17 @@ import java.util.regex.Pattern;
 
 public class Client {
     public static final String EXIT = "Exiting";
-    public static final String emailPattern = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
-    public static final Pattern emailRegexPattern = Pattern.compile(emailPattern);
-    public static final String namePattern = "[A-Z][a-zA-Z]*";
-    public static final Pattern nameRegexPattern = Pattern.compile(namePattern);
-    public static final String emailCommaName = "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}" +
-            "\\b,\\s*\\p{Lu}\\p{L}+\\s+\\p{Lu}\\p{L}+";
-    public static final Pattern emailCommaNamePattern = Pattern.compile(emailCommaName);
-    public static final String editMessageFormat = ".*;\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
-    public static final Pattern editMessagePattern = Pattern.compile(editMessageFormat);
-    public static final String deleteMessageFormat = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
-    public static final Pattern deleteMessagePattern = Pattern.compile(deleteMessageFormat);
+    public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+    public static final Pattern EMAIL_REGEX_PATTERN = Pattern.compile(EMAIL_PATTERN);
+    public static final String NAME_PATTERN = "[A-Z][a-zA-Z]*";
+    public static final Pattern NAME_REGEX_PATTERN = Pattern.compile(NAME_PATTERN);
+    public static final String EDIT_MESSAGE_FORMAT = ".*;\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
+    public static final Pattern EEDIT_MESSAGE_PATTERN = Pattern.compile(EDIT_MESSAGE_FORMAT);
+    public static final String DELETE_MESSAGE_FORMAT = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
+    public static final Pattern DELETE_MESSAGE_PATTERN = Pattern.compile(DELETE_MESSAGE_FORMAT);
     public static final String GUI_TITLE = "Messager";
-    public static final Object lock = new Object();
-    public static String GuiPass = new String( );
+    public static final Object LOCK = new Object();
+    public static String GUI_PASS = new String( );
 
     public static void endProgramDialog() {
         JOptionPane.showMessageDialog(null, "Thank you for using Messenger!",
@@ -117,17 +114,17 @@ public class Client {
         confirm.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                synchronized (lock) {
+                synchronized (LOCK) {
                     info.clear();
                     info.add(emailText.getText());
                     info.add(passwordText.getText());
                     info.add(nameText.getText());
                     if (info.stream().noneMatch(String::isEmpty)) {
                         if (createAccountCheck(info).isEmpty()) {
-                            GuiPass = new String((roleOutput[0] == 1) ? "true" : "false" + "," + info.get(0)
+                            GUI_PASS = new String((roleOutput[0] == 1) ? "true" : "false" + "," + info.get(0)
                                     + "," + info.get(1) + "," + info.get(2));
 
-                            lock.notify();
+                            LOCK.notify();
                             frame.dispose();
                         } else {
                             JOptionPane.showMessageDialog(null, String.join("\n",
@@ -151,12 +148,12 @@ public class Client {
     public static ArrayList<String> createAccountCheck(ArrayList<String> info) {
         int line = 0;
         ArrayList<String> errorList = new ArrayList<>();
-        if (!emailRegexPattern.matcher(info.get(line++)).matches()) {
+        if (!EMAIL_REGEX_PATTERN.matcher(info.get(line++)).matches()) {
             errorList.add("Invalid email format");
         }
         String tempString = info.get(++line);
         if (!Arrays.stream(tempString.split("\\s+")).
-                allMatch(word -> word.matches(namePattern))) {
+                allMatch(word -> word.matches(NAME_PATTERN))) {
             errorList.add("Invalid name format." +
                     " Name need to have every part's first letter uppercase");
         }
@@ -205,18 +202,18 @@ public class Client {
         confirm.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                synchronized (lock) {
+                synchronized (LOCK) {
                     info.clear();
                     info.add(emailText.getText());
                     info.add(passwordText.getText());
                     if (info.stream().noneMatch(String::isEmpty)) {
                         if (loginCheck(info).isEmpty()) {
-                            GuiPass = new String(String.join(",", info));
-                            lock.notify();
+                            GUI_PASS = new String(String.join(",", info));
+                            LOCK.notify();
                             frame.dispose();
                         } else {
-                            JOptionPane.showMessageDialog(null, String.join("\n", loginCheck(info)),
-                                    "Errors Found", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(null, String.join("\n",
+                                    loginCheck(info)), "Errors Found", JOptionPane.ERROR_MESSAGE);
                         }
                     } else {
                         JOptionPane.showMessageDialog(null, "Please fill all information",
@@ -235,7 +232,7 @@ public class Client {
 
     public static ArrayList<String> loginCheck(ArrayList<String> info) {
         ArrayList<String> errorList = new ArrayList<>();
-        if (!emailRegexPattern.matcher(info.get(0)).matches()) {
+        if (!EMAIL_REGEX_PATTERN.matcher(info.get(0)).matches()) {
             errorList.add("Invalid email format");
         }
         return errorList;
@@ -246,6 +243,10 @@ public class Client {
     }
 
     public static void mainSellerPage(ArrayList<String> storeName, ArrayList<String> conversationList) {
+
+    }
+
+    public static void messagePage(ArrayList<String> message) {
 
     }
 
@@ -300,7 +301,7 @@ public class Client {
                     String[] buttonOptions = {"Log in", "Create account"};
                     userInputInt = -1;
                     userInputInt = JOptionPane.showOptionDialog(null, "Choose an option:",
-                            "Two-Button Dialog", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                            "StartPage", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                             null, buttonOptions, buttonOptions[0]
                     );
                     // login page
@@ -324,14 +325,14 @@ public class Client {
                         writer.flush();
                         SwingUtilities.invokeLater(Client::loginPage);
                     }
-                    synchronized (lock) {
+                    synchronized (LOCK) {
                         try {
-                            lock.wait();
+                            LOCK.wait();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
-                    writer.println(GuiPass);
+                    writer.println(GUI_PASS);
                     writer.flush();
 
                     clientInput = reader.readLine();
@@ -444,12 +445,13 @@ public class Client {
                                     Arrays.stream(clientInput.split(";"))
                                             .map(String::trim)
                                             .forEach(storeNameList::add);
-                                    JOptionPane.showMessageDialog(null, String.format("Stores you own: %s",
-                                                    String.join(";", storeNameList)),
+                                    JOptionPane.showMessageDialog(null, String.format(
+                                                    "Stores you own: %s", String.join(";", storeNameList)),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
-                                    JOptionPane.showMessageDialog(null, "You don't have any store",
-                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                    JOptionPane.showMessageDialog(null,
+                                            "You don't have any store", GUI_TITLE,
+                                            JOptionPane.INFORMATION_MESSAGE);
                                 }
                                 do {
                                     error = false;
@@ -461,22 +463,25 @@ public class Client {
                                         return;
                                     }
                                     if (userInputString.isEmpty()) {
-                                        JOptionPane.showMessageDialog(null, "Store name cannot be empty",
-                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                        JOptionPane.showMessageDialog(null,
+                                                "Store name cannot be empty", GUI_TITLE,
+                                                JOptionPane.INFORMATION_MESSAGE);
                                         error = true;
                                     }
                                 } while (error);
                                 writer.println(userInputString);
                                 writer.flush();
-                                JOptionPane.showMessageDialog(null, "Successfully added a store",
-                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                JOptionPane.showMessageDialog(null,
+                                        "Successfully added a store", GUI_TITLE,
+                                        JOptionPane.INFORMATION_MESSAGE);
                             }
                         }
                         case 6 -> {
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
-                                JOptionPane.showMessageDialog(null, "No user been invisible by you",
-                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                JOptionPane.showMessageDialog(null,
+                                        "No user been invisible by you", GUI_TITLE,
+                                        JOptionPane.INFORMATION_MESSAGE);
                             } else {
                                 userNameList.clear();
                                 Arrays.stream(clientInput.split(";"))
@@ -485,13 +490,31 @@ public class Client {
                                 JOptionPane.showMessageDialog(null, String.format("Invisible Users: %s",
                                                 String.join(";", userNameList)),
                                         GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                userInputString = (String) JOptionPane.showInputDialog(null,
+                                        "Select an user to indivisibles from the list ", GUI_TITLE,
+                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(),
+                                        userNameList.get(0));
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
+                                writer.println(userInputString);
+                                writer.flush();
+                                clientInput = reader.readLine();
+                                if (!clientInput.equals("fail")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Successfully indivisible %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Fail to indivisible %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                }
                             }
-                            userInputString = (String) JOptionPane.showInputDialog(null,
-                                    "Select an user to indivisibles from the list ", GUI_TITLE,
-                                    JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(), null);
-                            writer.println(userInputString);
-                            writer.flush();
-                            clientInput = reader.readLine();
                         }
                         case 5 -> {
                             do {
@@ -524,13 +547,28 @@ public class Client {
                                         .forEach(userNameList::add);
                                 userInputString = (String) JOptionPane.showInputDialog(null,
                                         "Please select an user from the list ", GUI_TITLE,
-                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(), null);
+                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(),
+                                        userNameList.get(0));
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
-                                writer.println(userInputString);
-                                writer.flush();
-                                clientInput = reader.readLine();
+                                if (!clientInput.equals("fail")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Successfully invisible %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Fail to invisible %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                }
                             }
                         }
                         case 4 -> {
@@ -546,13 +584,32 @@ public class Client {
                                 JOptionPane.showMessageDialog(null, String.format("Blocked Users: %s",
                                                 String.join(";", userNameList)),
                                         GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                userInputString = (String) JOptionPane.showInputDialog(null,
+                                        "Select an user to unblocks from the list ", GUI_TITLE,
+                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(),
+                                        userNameList.get(0));
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
+                                writer.println(userInputString);
+                                writer.flush();
+                                clientInput = reader.readLine();
+                                if (!clientInput.equals("fail")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Successfully unblocked %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Fail to unblock %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                }
                             }
-                            userInputString = (String) JOptionPane.showInputDialog(null,
-                                    "Select an user to unblocks from the list ", GUI_TITLE,
-                                    JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(), null);
-                            writer.println(userInputString);
-                            writer.flush();
-                            clientInput = reader.readLine();
+
                         }
                         case 3 -> {
                             error = false;
@@ -585,7 +642,7 @@ public class Client {
                                             GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                     if (tempString.equals("name") || tempString.equals("email")) {
                                         if (tempString.equals("name")) {
-                                            matcher = nameRegexPattern.matcher(userInputString);
+                                            matcher = NAME_REGEX_PATTERN.matcher(userInputString);
                                             if (!matcher.matches()) {
                                                 JOptionPane.showMessageDialog(null,
                                                         "Invalid name format",
@@ -594,7 +651,7 @@ public class Client {
                                             }
                                         }
                                         if (tempString.equals("email")) {
-                                            matcher = emailRegexPattern.matcher(userInputString);
+                                            matcher = EMAIL_REGEX_PATTERN.matcher(userInputString);
                                             if (!matcher.matches()) {
                                                 JOptionPane.showMessageDialog(null,
                                                         "Invalid email format",
@@ -658,10 +715,28 @@ public class Client {
 
                                 userInputString = (String) JOptionPane.showInputDialog(null,
                                         "Please select an user from the list ", GUI_TITLE,
-                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(), null);
+                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(),
+                                        userNameList.get(0));
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
+                                if (!clientInput.equals("fail")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Successfully blocked %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Fail to block %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                }
                             }
                         }
                         case 1 -> {
@@ -694,13 +769,30 @@ public class Client {
                                 Arrays.stream(clientInput.split(";"))
                                         .map(String::trim)
                                         .forEach(userNameList::add);
-
                                 userInputString = (String) JOptionPane.showInputDialog(null,
                                         "Please select an user from the list to create conversation", GUI_TITLE,
-                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(), null);
+                                        JOptionPane.QUESTION_MESSAGE, null, userNameList.toArray(),
+                                        userNameList.get(0));
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
+                                if (!clientInput.equals("fail")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Successfully start a conversation to %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Fail to start a conversation to %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                }
                             }
                         }
                         case 0 -> {
@@ -781,7 +873,7 @@ public class Client {
                                                             " and new message separate with semicolon " +
                                                             "ex:oldmessage;time;newMessage");
                                                     userInputString = scan.nextLine();
-                                                    matcher = editMessagePattern.matcher(userInputString);
+                                                    matcher = EEDIT_MESSAGE_PATTERN.matcher(userInputString);
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
                                                         return;
@@ -813,7 +905,7 @@ public class Client {
                                                             " content of the message you want to delete" +
                                                             " separate with semicolon ex:time;content");
                                                     userInputString = scan.nextLine();
-                                                    matcher = deleteMessagePattern.matcher(userInputString);
+                                                    matcher = DELETE_MESSAGE_PATTERN.matcher(userInputString);
                                                     if (userInputString == null) {
                                                         System.out.println(EXIT);
                                                         return;

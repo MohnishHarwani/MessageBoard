@@ -123,7 +123,8 @@ public class ClientHandler implements Runnable{
                             } else {
                                 writer.println("seller");
                                 writer.flush();
-                                serverOutput = currentUser.getStoreName().stream().collect(Collectors.joining(";"));
+                                serverOutput = currentUser.
+                                        getStoreName().stream().collect(Collectors.joining(";"));
                                 writer.println(serverOutput);
                                 writer.flush();
                                 serverInput = reader.readLine();
@@ -137,19 +138,21 @@ public class ClientHandler implements Runnable{
                             serverOutput = currentUser.getInvisibleList().stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
                             writer.println(serverOutput);
                             writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                Server.unInvisUser(tempUser.get(), currentUser);
-                                writer.println(SUCCESS);
-                            } else {
-                                writer.println(FAIL);
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    Server.unInvisUser(tempUser.get(), currentUser);
+                                    writer.println(SUCCESS);
+                                } else {
+                                    writer.println(FAIL);
+                                }
+                                writer.flush();
                             }
-                            writer.flush();
                         }
                         case 5 -> {
                             tempUserList.clear();
@@ -158,26 +161,28 @@ public class ClientHandler implements Runnable{
                             serverOutput = tempUserList.stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
                             writer.println(serverOutput);
                             writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                if (!currentUser.isBlocked(tempUser.get())) {
-                                    tempUserList2 = currentUser.getInvisibleList();
-                                    tempUserList2.add(tempUser.get());
-                                    currentUser.setInvisibleList(tempUserList2);
-                                    Server.addAction("invisible", tempUser.get(), currentUser);
-                                    writer.println(SUCCESS);
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    if (!currentUser.isBlocked(tempUser.get())) {
+                                        tempUserList2 = currentUser.getInvisibleList();
+                                        tempUserList2.add(tempUser.get());
+                                        currentUser.setInvisibleList(tempUserList2);
+                                        Server.addAction("invisible", tempUser.get(), currentUser);
+                                        writer.println(SUCCESS);
+                                    } else {
+                                        writer.println("Already invisible this user");
+                                    }
                                 } else {
-                                    writer.println("Already invisible this user");
+                                    writer.println(FAIL);
                                 }
-                            } else {
-                                writer.println(FAIL);
+                                writer.flush();
                             }
-                            writer.flush();
                         }
                         case 4 -> {
                             tempUserList.clear();
@@ -185,19 +190,21 @@ public class ClientHandler implements Runnable{
                             serverOutput = currentUser.getBlockList().stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
                             writer.println(serverOutput);
                             writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                Server.unBlockUser(tempUser.get(), currentUser);
-                                writer.println(SUCCESS);
-                            } else {
-                                writer.println(FAIL);
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    Server.unBlockUser(tempUser.get(), currentUser);
+                                    writer.println(SUCCESS);
+                                } else {
+                                    writer.println(FAIL);
+                                }
+                                writer.flush();
                             }
-                            writer.flush();
                         }
                         case 3 -> {
                             serverInput = reader.readLine();
@@ -239,26 +246,28 @@ public class ClientHandler implements Runnable{
                             serverOutput = tempUserList.stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
                             writer.println(serverOutput);
                             writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                if (!currentUser.isBlocked(tempUser.get())) {
-                                    tempUserList2 = currentUser.getBlockList();
-                                    tempUserList2.add(tempUser.get());
-                                    currentUser.setBlockList(tempUserList2);
-                                    Server.addAction("block", tempUser.get(), currentUser);
-                                    writer.println(SUCCESS);
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    if (!currentUser.isBlocked(tempUser.get())) {
+                                        tempUserList2 = currentUser.getBlockList();
+                                        tempUserList2.add(tempUser.get());
+                                        currentUser.setBlockList(tempUserList2);
+                                        Server.addAction("block", tempUser.get(), currentUser);
+                                        writer.println(SUCCESS);
+                                    } else {
+                                        writer.println("Already blocked this user");
+                                    }
                                 } else {
-                                    writer.println("Already blocked this user");
+                                    writer.println(FAIL);
                                 }
-                            } else {
-                                writer.println(FAIL);
+                                writer.flush();
                             }
-                            writer.flush();
                         }
                         case 1 -> {
                             tempUserList.clear();
@@ -267,26 +276,28 @@ public class ClientHandler implements Runnable{
                             serverOutput = tempUserList.stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
-                            serverOutput = (serverInput.isEmpty()) ? "No result" : serverOutput;
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
                             writer.println(serverOutput);
                             writer.flush();
-                            serverInput = reader.readLine();
-                            tempSplit = serverInput.split(",", 2);
-                            tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                            if (tempUser.isPresent()) {
-                                if (!currentUser.isTalked(tempUser.get())) {
-                                    currentUser.addConversation(tempUser.get());
-                                    tempUser.get().addConversation(currentUser);
-                                    Server.addAction("chat", tempUser.get(), currentUser);
-                                    Server.addAction("chat", currentUser, tempUser.get());
-                                    writer.println(SUCCESS);
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    if (!currentUser.isTalked(tempUser.get())) {
+                                        currentUser.addConversation(tempUser.get());
+                                        tempUser.get().addConversation(currentUser);
+                                        Server.addAction("chat", tempUser.get(), currentUser);
+                                        Server.addAction("chat", currentUser, tempUser.get());
+                                        writer.println(SUCCESS);
+                                    } else {
+                                        writer.println("Conversation exist");
+                                    }
                                 } else {
-                                    writer.println("Conversation exist");
+                                    writer.println(FAIL);
                                 }
-                            } else {
-                                writer.println(FAIL);
+                                writer.flush();
                             }
-                            writer.flush();
                         }
                         case 0 -> {
                             tempUserList = currentUser.getConversationUser();

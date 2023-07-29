@@ -184,16 +184,7 @@ public class Server {
         return !users.stream().anyMatch(validUser -> validUser.getEmail().equals(email)
                 && validUser.getNameOfUser().equals(nameofUser));
     }
-    /*
-        public static boolean authenticateUser(String email, String password) {
-            for (User user : users) {
-                if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    */
+
     public synchronized static Optional<User> authenticateUser(ArrayList<User> listOfUser,
                                                                String email, String password) {
         return listOfUser.stream()
