@@ -234,7 +234,7 @@ public class User extends Thread {
         }
     }
 
-    public void deleteMessage(User receiver, String time, String message) throws NoMessageFoundException {
+    public void deleteMessage(User receiver, String message, String time) throws NoMessageFoundException {
         message = commaReplaceFile(message);
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
@@ -280,7 +280,6 @@ public class User extends Thread {
         String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
         File senderFile = new File(senderAddress);
         ArrayList<String[]> messages = new ArrayList<>();
-        boolean noMessageFound = true;
         String tempString;
         if (senderFile.exists()) {
             try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
@@ -309,9 +308,7 @@ public class User extends Thread {
     }
 
     public void sendTxtFile(User receiver, String fileAddress) throws FileNotFoundException {
-        File senderFile = new File(fileAddress);
         ArrayList<String> fileMessages = new ArrayList<>();
-        boolean noMessageFound = true;
         try (BufferedReader reader = new BufferedReader(new FileReader(fileAddress))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -323,6 +320,31 @@ public class User extends Thread {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public String exactMessage(User receiver, String message) throws NoPreviousMessageException {
+        message = commaReplaceFile(message);
+        String senderAddress = String.format("%s_%s.csv", this.nameOfUser, receiver.getNameOfUser());
+        File senderFile = new File(senderAddress);
+        ArrayList<String> messages = new ArrayList<>();
+        if (senderFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(senderAddress))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] messageData = line.split(",", 4);
+                    if (messageData[3].equals(message)) {
+                        messageData[3] = commaReplaceDisplay(messageData[3]);
+                        messages.add(messageData[2] + "-" + messageData[3]);
+                    }
+                }
+            } catch (IOException e) {
+                throw new NoPreviousMessageException("No message");
+            }
+        } else {
+            throw new NoPreviousMessageException("No file");
+        }
+
+        return String.join(";", messages);
     }
 
     public String commaReplaceFile(String message) {

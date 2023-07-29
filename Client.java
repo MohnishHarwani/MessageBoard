@@ -1,13 +1,18 @@
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListDataEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -24,7 +29,6 @@ import java.util.regex.Pattern;
  */
 
 public class Client {
-    public static final String EXIT = "Exiting";
     public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     public static final Pattern EMAIL_REGEX_PATTERN = Pattern.compile(EMAIL_PATTERN);
     public static final String NAME_PATTERN = "[A-Z][a-zA-Z]*";
@@ -35,7 +39,16 @@ public class Client {
     public static final Pattern DELETE_MESSAGE_PATTERN = Pattern.compile(DELETE_MESSAGE_FORMAT);
     public static final String GUI_TITLE = "Messager";
     public static final Object LOCK = new Object();
-    public static String GUI_PASS = new String( );
+    public static String GUI_PASS = new String();
+    public static int OPTION_PASS;
+    public static ArrayList<String> storeName;
+    public static ArrayList<String> sellerName;
+    public static ArrayList<String> conversationUserList;
+    public static String currentUser;
+    public static boolean keepMessage;
+    public static boolean refreshMessage;
+    public static boolean isFrameDisposed;
+    public static ArrayList<String> messageList = new ArrayList<>();
 
     public static void endProgramDialog() {
         JOptionPane.showMessageDialog(null, "Thank you for using Messenger!",
@@ -121,9 +134,8 @@ public class Client {
                     info.add(nameText.getText());
                     if (info.stream().noneMatch(String::isEmpty)) {
                         if (createAccountCheck(info).isEmpty()) {
-                            GUI_PASS = new String((roleOutput[0] == 1) ? "true" : "false" + "," + info.get(0)
-                                    + "," + info.get(1) + "," + info.get(2));
-
+                            GUI_PASS = (roleOutput[0] == 1) ? "true" : "false";
+                            GUI_PASS += "," + info.get(0) + "," + info.get(1) + "," + info.get(2);
                             LOCK.notify();
                             frame.dispose();
                         } else {
@@ -138,26 +150,41 @@ public class Client {
             }
         });
 
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                synchronized (LOCK) {
+                    int result = JOptionPane.showConfirmDialog(frame, "Are you sure you want to close the window?",
+                            "Confirm Close", JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        isFrameDisposed = true;
+                        LOCK.notify();
+                        frame.dispose(); // Close the frame
+                    }
+                }
+            }
+        });
+
         frame.add(panel);
         frame.pack();
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
     }
 
     public static ArrayList<String> createAccountCheck(ArrayList<String> info) {
         int line = 0;
-        ArrayList<String> errorList = new ArrayList<>();
+        ArrayList<String> tempErrorList = new ArrayList<>();
         if (!EMAIL_REGEX_PATTERN.matcher(info.get(line++)).matches()) {
-            errorList.add("Invalid email format");
+            tempErrorList.add("Invalid email format");
         }
         String tempString = info.get(++line);
         if (!Arrays.stream(tempString.split("\\s+")).
                 allMatch(word -> word.matches(NAME_PATTERN))) {
-            errorList.add("Invalid name format." +
+            tempErrorList.add("Invalid name format." +
                     " Name need to have every part's first letter uppercase");
         }
-        return errorList;
+        return tempErrorList;
     }
 
     private static void updateMenuBarAppearance(JMenuBar menuBar, Color color, int style) {
@@ -199,6 +226,21 @@ public class Client {
         gridBagConstraints.gridy = line;
         panel.add(confirm, gridBagConstraints);
 
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                synchronized (LOCK) {
+                    int result = JOptionPane.showConfirmDialog(frame, "Are you sure you want to close the window?",
+                            "Confirm Close", JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        isFrameDisposed = true;
+                        LOCK.notify();
+                        frame.dispose(); // Close the frame
+                    }
+                }
+            }
+        });
+
         confirm.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -222,34 +264,292 @@ public class Client {
                 }
             }
         });
-
         frame.add(panel);
         frame.pack();
         frame.setLocationRelativeTo(null);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
     }
 
     public static ArrayList<String> loginCheck(ArrayList<String> info) {
-        ArrayList<String> errorList = new ArrayList<>();
+        ArrayList<String> tempErrorList = new ArrayList<>();
         if (!EMAIL_REGEX_PATTERN.matcher(info.get(0)).matches()) {
-            errorList.add("Invalid email format");
+            tempErrorList.add("Invalid email format");
         }
-        return errorList;
+        return tempErrorList;
     }
 
-    public static void mainCustomerPage(ArrayList<String> storeName, ArrayList<String> sellerName, ArrayList<String> conversationList) {
+    public static void mainCustomerPage() {
+        int line = 0;
+        JFrame frame = new JFrame("Message Sender");
+        JPanel mainPanel = new JPanel(new GridBagLayout());
 
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridy = line++;
+        gridBagConstraints.anchor = GridBagConstraints.WEST; // Set anchor to the left
+
+        // Add display text with titles at the top on thr;ee different lines using HTML formatting
+        //JLabel themeLabel = new JLabel("<html><div style='text-align: left;'>Current User<br>Seller<br>Existing Conversation</div></html>");
+        JLabel currentUserLabel = new JLabel(String.format("Current User: %s (%s)", currentUser.split(",")[0], currentUser.split(",")[1]));
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+        mainPanel.add(currentUserLabel, gridBagConstraints);
+
+
+
+        int counter = 0;
+        String sellerStore = "Seller and stores: ";
+        if (!sellerName.isEmpty() && !sellerName.get(0).isEmpty()) {
+            JLabel sellerStorelabel = new JLabel(sellerStore);
+            gridBagConstraints.gridy = line++;
+            gridBagConstraints.gridwidth = 2;
+            gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+            mainPanel.add(sellerStorelabel, gridBagConstraints);
+            while (counter < sellerName.size()) {
+                sellerStore = String.format("Seller: %s -> Stores: %s",sellerName.get(counter), storeName.get(counter));
+                sellerStorelabel = new JLabel(sellerStore);
+                gridBagConstraints.gridy = line++;
+                gridBagConstraints.gridwidth = 2;
+                gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+                mainPanel.add(sellerStorelabel, gridBagConstraints);
+                counter++;
+            }
+        } else {
+            sellerStore = "Server contain no seller";
+            JLabel sellerStorelabel = new JLabel(sellerStore);
+            gridBagConstraints.gridy = line++;
+            gridBagConstraints.gridwidth = 2;
+            gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+            mainPanel.add(sellerStorelabel, gridBagConstraints);
+        }
+
+        String conversations = "Exist Conversation: ";
+        if (conversationUserList.isEmpty() || conversationUserList.get(0).isEmpty()) {
+            conversations = "No exist conversation";
+        } else {
+            conversations += String.join(", ", conversationUserList);
+        }
+
+        JLabel conversationLabel = new JLabel(conversations);
+        gridBagConstraints.gridy = line++;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+        mainPanel.add(conversationLabel, gridBagConstraints);
+
+        JButton[] messageButtons = new JButton[9];
+
+        // Define some fancy colors
+        Color[] buttonColors = {
+                new Color(237, 101, 102),
+                new Color(102, 237, 141),
+                new Color(102, 133, 237),
+                new Color(237, 178, 102),
+                new Color(204, 102, 237),
+                new Color(180, 225, 102),
+                new Color(177, 102, 237),
+                new Color(237, 102, 204),
+                new Color(50, 50, 204)
+        };
+
+        // Create a fancy border for the buttons
+        Border fancyBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK, 5),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        );
+        String[] optionText = {"Select a specific conversation to message",
+                "Search user to create new conversation", "Block any user",
+                "Unblock any user", "Invisible any user", "Indivisibles any user",
+                "Account Modification", "add store", "log off"};
+        for (int i = 0; i < messageButtons.length; i++) {
+            messageButtons[i] = new JButton(optionText[i]);
+            messageButtons[i].setBackground(buttonColors[i]); // Set different colors for each button
+            messageButtons[i].setForeground(Color.WHITE); // Set white text color for better visibility
+            messageButtons[i].setBorder(fancyBorder); // Apply the fancy border to buttons
+            gridBagConstraints.gridy = i + line;
+            gridBagConstraints.gridx = 0;
+            gridBagConstraints.gridwidth = 1;
+            mainPanel.add(messageButtons[i], gridBagConstraints);
+        }
+
+        // Create a fancy border for the whole frame
+        Border frameBorder = BorderFactory.createLineBorder(Color.BLACK, 10);
+        mainPanel.setBorder(BorderFactory.createCompoundBorder(frameBorder,
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+
+        frame.add(mainPanel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setVisible(true);
+
+        for (int i = 0; i < messageButtons.length; i++) {
+            int finalI = i;
+            messageButtons[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    synchronized (LOCK) {
+                        OPTION_PASS = finalI;
+                        LOCK.notify();
+                        frame.dispose();
+                    }
+                }
+            });
+        }
+
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                synchronized (LOCK) {
+                    int result = JOptionPane.showConfirmDialog(frame,
+                            "Are you sure you want to close the window?", "Confirm Close",
+                            JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        isFrameDisposed = true;
+                        LOCK.notify();
+                        frame.dispose(); // Close the frame
+                    }
+                }
+            }
+        });
     }
 
-    public static void mainSellerPage(ArrayList<String> storeName, ArrayList<String> conversationList) {
+    public static void mainSellerPage() {
+        JFrame frame = new JFrame("Message Sender");
+        JPanel mainPanel = new JPanel(new GridBagLayout());
 
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.anchor = GridBagConstraints.WEST; // Set anchor to the left
+
+        // Add display text with titles at the top on thr;ee different lines using HTML formatting
+        //JLabel themeLabel = new JLabel("<html><div style='text-align: left;'>Current User<br>Seller<br>Existing Conversation</div></html>");
+        JLabel currentUserLabel = new JLabel(String.format("Current User: %s (%s)",
+                currentUser.split(",")[0], currentUser.split(",")[1]));
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+        mainPanel.add(currentUserLabel, gridBagConstraints);
+
+        String sellerStore = "My stores:  \n";
+        if (storeName.isEmpty() || storeName.get(0).isEmpty()) {
+            sellerStore += "None";
+        } else {
+            sellerStore += String.join(", ", storeName);
+        }
+
+        JLabel storeLabel = new JLabel(sellerStore);
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+        mainPanel.add(storeLabel, gridBagConstraints);
+
+        String conversations = "Exist Conversation: ";
+        if (conversationUserList.isEmpty() || conversationUserList.get(0).isEmpty()) {
+            conversations = "No exist conversation";
+        } else {
+            conversations += String.join(", ", conversationUserList);
+        }
+
+        JLabel conversationLabel = new JLabel(conversations);
+        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.insets = new Insets(5, 10, 5, 10); // Add some padding
+        mainPanel.add(conversationLabel, gridBagConstraints);
+
+        JButton[] messageButtons = new JButton[9];
+
+        // Define some fancy colors
+        Color[] buttonColors = {
+                new Color(237, 101, 102),
+                new Color(102, 237, 141),
+                new Color(102, 133, 237),
+                new Color(237, 178, 102),
+                new Color(204, 102, 237),
+                new Color(180, 225, 102),
+                new Color(177, 102, 237),
+                new Color(237, 102, 204),
+                new Color(50, 50, 204)
+        };
+
+        // Create a fancy border for the buttons
+        Border fancyBorder = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK, 5),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        );
+
+        String[] optionText = {"Select a specific conversation to message",
+                "Search user to create new conversation", "Block any user",
+                "Unblock any user", "Invisible any user", "Indivisibles any user",
+                "Account Modification", "add store", "log off"};
+        for (int i = 0; i < messageButtons.length; i++) {
+            messageButtons[i] = new JButton(optionText[i]);
+            messageButtons[i].setBackground(buttonColors[i]); // Set different colors for each button
+            messageButtons[i].setForeground(Color.WHITE); // Set white text color for better visibility
+            messageButtons[i].setBorder(fancyBorder); // Apply the fancy border to buttons
+            gridBagConstraints.gridy = i + 3;
+            gridBagConstraints.gridx = 0;
+            gridBagConstraints.gridwidth = 1;
+            mainPanel.add(messageButtons[i], gridBagConstraints);
+        }
+
+        // Create a fancy border for the whole frame
+        Border frameBorder = BorderFactory.createLineBorder(Color.BLACK, 10);
+        mainPanel.setBorder(BorderFactory.createCompoundBorder(frameBorder,
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
+
+        frame.add(mainPanel);
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setVisible(true);
+
+        for (int i = 0; i < messageButtons.length; i++) {
+            int finalI = i;
+            messageButtons[i].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    synchronized (LOCK) {
+                        OPTION_PASS = finalI;
+                        LOCK.notify();
+                        frame.dispose();
+                    }
+                }
+            });
+        }
+
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                synchronized (LOCK) {
+                    int result = JOptionPane.showConfirmDialog(frame, "Are you sure you want to close the window?",
+                            "Confirm Close", JOptionPane.YES_NO_OPTION);
+                    if (result == JOptionPane.YES_OPTION) {
+                        isFrameDisposed = true;
+                        LOCK.notify();
+                        frame.dispose(); // Close the frame
+                    }
+                }
+            }
+        });
     }
 
-    public static void messagePage(ArrayList<String> message) {
+    /*
+        public static void messagePage(ArrayList<String> message) {
+            new Thread(() -> {
+                while (keepMessage) {
+                    if (!keepMessage) {
+                        panel.repaint();
+                        refreshMessage = false;
+                    }
+                    if (!keepMessage) {
+                        frame.dispose();
+                    }
+                }
+            }).start();
+        }
 
-    }
 
+     */
     public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
         int counter = 0;
@@ -267,9 +567,8 @@ public class Client {
         ArrayList<String> userNameList2 = new ArrayList<>();
         ArrayList<String> storeNameList = new ArrayList<>();
         ArrayList<String> conversationList = new ArrayList<>();
-        ArrayList<String> messageList = new ArrayList<>();
+        ArrayList<String> tempMessageList = new ArrayList<>();
         ArrayList<String> infoList = new ArrayList<>();
-        ArrayList<String> errorList = new ArrayList<>();
 
         // Connect to server
         JOptionPane.showMessageDialog(null, "Establishing connection",
@@ -311,9 +610,7 @@ public class Client {
                     }
                     notloggedIn = true;
 
-                    error = false;
-                    int line = 0;
-                    errorList.clear();
+                    isFrameDisposed = false;
                     if (userInputInt == 1) {
                         //create account
                         writer.println("Create account");
@@ -332,6 +629,10 @@ public class Client {
                             e.printStackTrace();
                         }
                     }
+                    if (isFrameDisposed) {
+                        endProgramDialog();
+                        return;
+                    }
                     writer.println(GUI_PASS);
                     writer.flush();
 
@@ -349,6 +650,9 @@ public class Client {
                 do {
                     // Display
                     seller = true;
+                    storeName = new ArrayList<String>();
+                    sellerName = new ArrayList<String>();
+                    conversationUserList = new ArrayList<String>();
                     storeNameList.clear();
                     userNameList.clear();
                     userNameList2.clear();
@@ -358,76 +662,44 @@ public class Client {
                         clientInput = reader.readLine();
                         Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
-                                .forEach(storeNameList::add);
+                                .forEach(storeName::add);
                         clientInput = reader.readLine();
                         Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
-                                .forEach(userNameList2::add);
+                                .forEach(sellerName::add);
 
                     } else {
                         clientInput = reader.readLine();
                         Arrays.stream(clientInput.split(";"))
                                 .map(String::trim)
-                                .forEach(storeNameList::add);
+                                .forEach(storeName::add);
                     }
                     clientInput = reader.readLine();
                     Arrays.stream(clientInput.split(";"))
                             .map(String::trim)
-                            .forEach(userNameList::add);
+                            .forEach(conversationUserList::add);
                     counter = 0;
-                    clientInput = reader.readLine();
-                    System.out.println("\n" + clientInput);
+                    currentUser = reader.readLine();
                     if (!seller) {
-                        if (!userNameList2.isEmpty() && !userNameList2.get(0).isEmpty()) {
-                            while (counter < userNameList2.size()) {
-                                System.out.printf("Seller: %s ->" +
-                                        " Stores: %s\n", userNameList2.get(counter), storeNameList.get(counter));
-                                counter++;
-                            }
-                        } else {
-                            System.out.println("Server contain no seller");
-                        }
+                        SwingUtilities.invokeLater(Client::mainCustomerPage);
                     } else {
-                        System.out.print("My stores: ");
-
-                        if (storeNameList.isEmpty() || storeNameList.get(0).isEmpty()) {
-                            tempString = "None";
-                        } else {
-                            tempString = String.join(", ", storeNameList);
-                        }
-                        System.out.println(tempString);
+                        SwingUtilities.invokeLater(Client::mainSellerPage);
                     }
-                    System.out.print("Exist conversation: ");
-                    if (userNameList.isEmpty() || userNameList.get(0).isEmpty()) {
-                        tempString = "None";
-                    } else {
-                        tempString = String.join(", ", userNameList);
-                    }
-                    System.out.println(tempString);
-
-                    // option
-                    do {
-                        error = false;
-                        System.out.println("\nOptions ->\n0: Select a specific conversation\n" +
-                                "1: Search user to create new conversation\n2: Block any user\n" +
-                                "3: Account Modification\n4: Unblock any user\n5: Invisible any user\n" +
-                                "6: Indivisibles any user\n" + "7: add store\n8: log off");
+                    synchronized (LOCK) {
                         try {
-                            userInputInt = Integer.parseInt(scan.next());
-                            if (userInputInt < 0 || userInputInt > 8) {
-                                System.out.println("Invalid input");
-                                error = true;
-                            }
-                        } catch (IllegalArgumentException e) {
-                            System.out.println("Invalid input");
-                            error = true;
+                            LOCK.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                    } while (error);
-                    scan.nextLine();
-                    writer.println(Integer.toString(userInputInt));
+                    }
+                    if (isFrameDisposed) {
+                        endProgramDialog();
+                        return;
+                    }
+                    writer.println(OPTION_PASS);
                     writer.flush();
                     keepOption = true;
-                    switch (userInputInt) {
+                    switch (OPTION_PASS) {
                         case 8 -> {
                             JOptionPane.showMessageDialog(null, "Logging off",
                                     GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -459,7 +731,7 @@ public class Client {
                                             "Enter the store you want to add",
                                             GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                     if (userInputString == null) {
-                                        System.out.println(EXIT);
+                                        endProgramDialog();
                                         return;
                                     }
                                     if (userInputString.isEmpty()) {
@@ -477,6 +749,76 @@ public class Client {
                             }
                         }
                         case 6 -> {
+                            error = false;
+                            String[] accountModificationText = {"Change name", "Change email",
+                                    "Change password", "Delete Account"};
+                            userInputString = (String) JOptionPane.showInputDialog(null,
+                                    "Please select option from the list ", GUI_TITLE,
+                                    JOptionPane.QUESTION_MESSAGE, null, accountModificationText, null);
+                            if (tempString == null) {
+                                endProgramDialog();
+                                return;
+                            }
+                            switch (userInputString) {
+                                case "Change name" -> {tempString = "name"; userInputInt = 0;}
+                                case "Change email" -> {tempString = "email"; userInputInt = 1;}
+                                case "Change password" -> {tempString = "password"; userInputInt = 2;}
+                                case "Delete Account" -> {
+                                    JOptionPane.showMessageDialog(null,
+                                            "logging off",
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                    keepOption = false;
+                                    userInputInt = 3;
+                                }
+                            }
+                            writer.println(userInputInt);
+                            writer.flush();
+                            if (userInputInt != 3) {
+                                do {
+                                    error = false;
+                                    userInputString = JOptionPane.showInputDialog(null,
+                                            String.format("What is the new %s", tempString),
+                                            GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
+                                    if (tempString.equals("name") || tempString.equals("email")) {
+                                        if (tempString.equals("name")) {
+                                            if (!Arrays.stream(userInputString.split("\\s+")).
+                                                    allMatch(word -> word.matches(NAME_PATTERN))) {
+                                                JOptionPane.showMessageDialog(null,
+                                                        "Invalid name format",
+                                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                error = true;
+                                            }
+                                        }
+                                        if (tempString.equals("email")) {
+                                            matcher = EMAIL_REGEX_PATTERN.matcher(userInputString);
+                                            if (!matcher.matches()) {
+                                                JOptionPane.showMessageDialog(null,
+                                                        "Invalid email format",
+                                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                error = true;
+                                            }
+                                        }
+                                    }
+                                    if (userInputString == null) {
+                                        endProgramDialog();
+                                        return;
+                                    }
+                                    if (userInputString.isEmpty()) {
+                                        JOptionPane.showMessageDialog(null,
+                                                String.format("%s cannot be empty", tempString),
+                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                        error = true;
+                                    }
+                                } while (error);
+                                writer.println(userInputString);
+                                writer.flush();
+                            }
+                            clientInput = reader.readLine();
+                            JOptionPane.showMessageDialog(null,
+                                    clientInput,
+                                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                        }
+                        case 5 -> {
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 JOptionPane.showMessageDialog(null,
@@ -516,7 +858,7 @@ public class Client {
                                 }
                             }
                         }
-                        case 5 -> {
+                        case 4 -> {
                             do {
                                 error = false;
                                 userInputString = JOptionPane.showInputDialog(null,
@@ -571,7 +913,7 @@ public class Client {
                                 }
                             }
                         }
-                        case 4 -> {
+                        case 3 -> {
                             clientInput = reader.readLine();
                             if (clientInput.equals("No result")) {
                                 JOptionPane.showMessageDialog(null, "No user been blocked by you",
@@ -609,79 +951,6 @@ public class Client {
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 }
                             }
-
-                        }
-                        case 3 -> {
-                            error = false;
-                            String[] accountModificationText = {"0: Change name", "1: Change email",
-                                    "2: Change password", "3: Delete Account"};
-                            userInputString = (String) JOptionPane.showInputDialog(null,
-                                    "Please select option from the list ", GUI_TITLE,
-                                    JOptionPane.QUESTION_MESSAGE, null, accountModificationText, null);
-                            if (tempString == null) {
-                                endProgramDialog();
-                                return;
-                            }
-                            switch (userInputString) {
-                                case "0: Change name" -> {tempString = "name"; userInputInt = 0;}
-                                case "1: Change email" -> {tempString = "email"; userInputInt = 1;}
-                                case "2: Change password" -> {tempString = "password"; userInputInt = 2;}
-                                case "3: Delete Account" -> {
-                                    System.out.println("logging off");
-                                    keepOption = false;
-                                    userInputInt = 3;
-                                }
-                            }
-                            writer.println(Integer.parseInt(userInputString));
-                            writer.flush();
-                            if (Integer.parseInt(userInputString) != 3) {
-                                do {
-                                    error = false;
-                                    userInputString = JOptionPane.showInputDialog(null,
-                                            String.format("What is the new %s", tempString),
-                                            GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
-                                    if (tempString.equals("name") || tempString.equals("email")) {
-                                        if (tempString.equals("name")) {
-                                            matcher = NAME_REGEX_PATTERN.matcher(userInputString);
-                                            if (!matcher.matches()) {
-                                                JOptionPane.showMessageDialog(null,
-                                                        "Invalid name format",
-                                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
-                                                error = true;
-                                            }
-                                        }
-                                        if (tempString.equals("email")) {
-                                            matcher = EMAIL_REGEX_PATTERN.matcher(userInputString);
-                                            if (!matcher.matches()) {
-                                                JOptionPane.showMessageDialog(null,
-                                                        "Invalid email format",
-                                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
-                                                error = true;
-                                            }
-                                        }
-                                    }
-                                    if (userInputString == null) {
-                                        System.out.println(EXIT);
-                                        return;
-                                    }
-                                    if (userInputString.isEmpty()) {
-                                        JOptionPane.showMessageDialog(null,
-                                                String.format("%s cannot be empty", tempString),
-                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
-                                        error = true;
-                                    }
-                                } while (error);
-                                writer.println(userInputString);
-                                writer.flush();
-                            }
-                            clientInput = reader.readLine();
-                            if (clientInput.equals("User have no conversation")) {
-                                JOptionPane.showMessageDialog(null,
-                                        String.format("User have no conversation to modify", tempString),
-                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
-                                clientInput = reader.readLine();
-                            }
-                            System.out.println(clientInput);
                         }
                         case 2 -> {
                             do {
@@ -747,7 +1016,7 @@ public class Client {
                                                 " to create new conversation? (Search)",
                                         GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                 if (userInputString == null) {
-                                    System.out.println(EXIT);
+                                    endProgramDialog();
                                     return;
                                 }
                                 if (userInputString.isEmpty()) {
@@ -804,8 +1073,12 @@ public class Client {
                                         .forEach(conversationList::add);
 
                                 userInputString = (String) JOptionPane.showInputDialog(null,
-                                        "Please select an user from the list to create conversation", GUI_TITLE,
+                                        "Select a exist conversation", GUI_TITLE,
                                         JOptionPane.QUESTION_MESSAGE, null, conversationList.toArray(), null);
+                                if (userInputString == null) {
+                                    endProgramDialog();
+                                    return;
+                                }
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
@@ -818,8 +1091,11 @@ public class Client {
                                         keepConversation = true;
                                         clientInput = reader.readLine();
                                         if (clientInput.equals("fail")) {
-                                            System.out.println("No message");
+                                            JOptionPane.showMessageDialog(null,
+                                                    "No message",
+                                                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                         } else {
+                                            // Display message
                                             messageList.clear();
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
@@ -827,11 +1103,17 @@ public class Client {
                                             System.out.println("Messages:");
                                             messageList.forEach(System.out::println);
                                         }
+                                        keepMessage = true;
+                                        refreshMessage = false;
                                         String[] accountModificationText = {"0: New message", "1: Edit Message",
                                                 "2: DeleteMessage", "3: Exit conversation"};
                                         userInputString = (String) JOptionPane.showInputDialog(null,
                                                 "Please select option from the list", GUI_TITLE,
                                                 JOptionPane.QUESTION_MESSAGE, null, accountModificationText, null);
+                                        if (userInputString == null) {
+                                            endProgramDialog();
+                                            return;
+                                        }
                                         switch (userInputString) {
                                             case "0: New message" -> userInputInt = 0;
                                             case "1: Edit Message" -> userInputInt = 1;
@@ -847,14 +1129,18 @@ public class Client {
                                             case 0 -> {
                                                 do {
                                                     error = false;
-                                                    System.out.println("New message content");
-                                                    userInputString = scan.nextLine();
+                                                    userInputString = JOptionPane.showInputDialog(null,
+                                                            "New message content",
+                                                            GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                                     if (userInputString == null) {
-                                                        System.out.println(EXIT);
+                                                        endProgramDialog();
                                                         return;
                                                     }
                                                     if (userInputString.isEmpty()) {
-                                                        System.out.println("Content cannot be empty");
+                                                        JOptionPane.showMessageDialog(null,
+                                                                "Content cannot be empty",
+                                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
                                                         error = true;
                                                     }
                                                 } while (error);
@@ -862,80 +1148,169 @@ public class Client {
                                                 writer.flush();
                                                 clientInput = reader.readLine();
                                                 if (clientInput.equals("blocked")) {
-                                                    System.out.println("You are blocked by receiver," +
-                                                            " cannot send message");
+                                                    JOptionPane.showMessageDialog(null,
+                                                            "You are blocked by receiver," +
+                                                                    " cannot send message",
+                                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                 }
+                                                refreshMessage = true;
                                             }
                                             case 1 -> {
                                                 do {
                                                     error = false;
-                                                    System.out.println("Enter the old message, time," +
-                                                            " and new message separate with semicolon " +
-                                                            "ex:oldmessage;time;newMessage");
-                                                    userInputString = scan.nextLine();
-                                                    matcher = EEDIT_MESSAGE_PATTERN.matcher(userInputString);
+                                                    userInputString = JOptionPane.showInputDialog(null,
+                                                            "What is The old message content you want to edit",
+                                                            GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                                     if (userInputString == null) {
-                                                        System.out.println(EXIT);
+                                                        endProgramDialog();
                                                         return;
                                                     }
                                                     if (userInputString.isEmpty()) {
-                                                        System.out.println("Email and Name cannot be empty");
-                                                        error = true;
-                                                    }
-                                                    if (!userInputString.contains(";")) {
-                                                        System.out.println("Invalid input, no semicolon present");
-                                                        error = true;
-                                                    }
-                                                    if (!matcher.matches()) {
-                                                        System.out.println("Invalid format");
+                                                        JOptionPane.showMessageDialog(null,
+                                                                "Content cannot be empty",
+                                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
                                                         error = true;
                                                     }
                                                 } while (error);
+                                                tempString = userInputString + ";";
                                                 writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
-                                                if (clientInput.equals("Message not found")) {
-                                                    System.out.println("Input message not found");
+                                                if (clientInput.equals("No result")) {
+                                                    JOptionPane.showMessageDialog(null,
+                                                            "No such message content find",
+                                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                } else {
+                                                    tempMessageList.clear();
+                                                    Arrays.stream(clientInput.split(";"))
+                                                            .map(String::trim)
+                                                            .forEach(tempMessageList::add);
+                                                    //tempString += userInputString + ";";
+                                                    do {
+                                                        error = false;
+                                                        userInputString = (String) JOptionPane.showInputDialog(null,
+                                                                "Please select a message from the list", GUI_TITLE,
+                                                                JOptionPane.QUESTION_MESSAGE, null, tempMessageList.toArray(), null);
+                                                        if (userInputString == null) {
+                                                            endProgramDialog();
+                                                            return;
+                                                        }
+                                                        if (userInputString.isEmpty()) {
+                                                            JOptionPane.showMessageDialog(null,
+                                                                    "Time cannot be empty",
+                                                                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+                                                            error = true;
+                                                        }
+                                                    } while (error);
+                                                    tempString += userInputString.substring(0, userInputString.indexOf("-")) + ";";
+                                                    do {
+                                                        error = false;
+                                                        userInputString = JOptionPane.showInputDialog(null,
+                                                                "New message content",
+                                                                GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
+                                                        if (userInputString == null) {
+                                                            endProgramDialog();
+                                                            return;
+                                                        }
+                                                        if (userInputString.isEmpty()) {
+                                                            JOptionPane.showMessageDialog(null,
+                                                                    "Content cannot be empty",
+                                                                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+                                                            error = true;
+                                                        }
+                                                    } while (error);
+                                                    tempString += userInputString;
+                                                    writer.println(tempString);
+                                                    writer.flush();
+                                                    clientInput = reader.readLine();
+                                                    if (clientInput.equals("Message not found")) {
+                                                        JOptionPane.showMessageDialog(null,
+                                                                "Input message not found",
+                                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                    }
+                                                    refreshMessage = true;
                                                 }
                                             }
                                             case 2 -> {
+                                                tempString = "";
                                                 do {
                                                     error = false;
-                                                    System.out.println("Enter the time and" +
-                                                            " content of the message you want to delete" +
-                                                            " separate with semicolon ex:time;content");
-                                                    userInputString = scan.nextLine();
-                                                    matcher = DELETE_MESSAGE_PATTERN.matcher(userInputString);
+                                                    userInputString = JOptionPane.showInputDialog(null,
+                                                            "The message content you want to delete",
+                                                            GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                                     if (userInputString == null) {
-                                                        System.out.println(EXIT);
+                                                        endProgramDialog();
                                                         return;
                                                     }
                                                     if (userInputString.isEmpty()) {
-                                                        System.out.println("time and content cannot be empty");
-                                                        error = true;
-                                                    }
-                                                    if (!matcher.matches()) {
-                                                        System.out.println("Invalid format");
+                                                        JOptionPane.showMessageDialog(null,
+                                                                "Content cannot be empty",
+                                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
                                                         error = true;
                                                     }
                                                 } while (error);
+                                                tempString = userInputString + ";";
                                                 writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
-                                                if (clientInput.equals("Message not found")) {
-                                                    System.out.println("Input message not found");
+                                                if (clientInput.equals("No result")) {
+                                                    JOptionPane.showMessageDialog(null,
+                                                            "No such message content find",
+                                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                } else {
+                                                    tempMessageList.clear();
+                                                    Arrays.stream(clientInput.split(";"))
+                                                            .map(String::trim)
+                                                            .forEach(tempMessageList::add);
+                                                    //tempString += userInputString + ";";
+                                                    do {
+                                                        error = false;
+                                                        userInputString = (String) JOptionPane.showInputDialog(null,
+                                                                "Please select a message from the list", GUI_TITLE,
+                                                                JOptionPane.QUESTION_MESSAGE, null, tempMessageList.toArray(), null);
+                                                        if (userInputString == null) {
+                                                            endProgramDialog();
+                                                            return;
+                                                        }
+                                                        if (userInputString.isEmpty()) {
+                                                            JOptionPane.showMessageDialog(null,
+                                                                    "Time cannot be empty",
+                                                                    GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+                                                            error = true;
+                                                        }
+                                                    } while (error);
+                                                    tempString += userInputString.substring(0, userInputString.indexOf("-"));
+                                                    writer.println(tempString);
+                                                    writer.flush();
+                                                    clientInput = reader.readLine();
+                                                    if (clientInput.equals("Message not found")) {
+                                                        JOptionPane.showMessageDialog(null,
+                                                                "Input message not found",
+                                                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                                    }
+                                                    refreshMessage = true;
                                                 }
                                             }
                                             case 3 -> {
-                                                System.out.println("Exit conversation");
+                                                JOptionPane.showMessageDialog(null,
+                                                        "Exiting conversation",
+                                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                 keepConversation = false;
+                                                keepMessage = false;
                                             }
                                         }
                                     } while (keepConversation);
                                 }
                             } else {
-                                System.out.println("You have no exist conversation," +
-                                        " please add new user to make conversation");
+                                JOptionPane.showMessageDialog(null,
+                                        "You have no exist conversation," +
+                                                " please add new user to make conversation",
+                                        GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                             }
                         }
                     }

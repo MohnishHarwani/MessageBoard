@@ -105,7 +105,7 @@ public class ClientHandler implements Runnable{
                             .collect(Collectors.joining(";"));
                     writer.println(serverOutput);
                     writer.flush();
-                    writer.println(String.format("Current User: %s, %s", currentUser.getNameOfUser(),
+                    writer.println(String.format("%s,%s", currentUser.getNameOfUser(),
                             (currentUser.isUserType()) ? "Seller" : "Buyer" ));
                     //operation
                     writer.flush();
@@ -133,80 +133,6 @@ public class ClientHandler implements Runnable{
                             }
                         }
                         case 6 -> {
-                            tempUserList.clear();
-                            tempUserList = currentUser.getInvisibleList();
-                            serverOutput = currentUser.getInvisibleList().stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
-                            writer.println(serverOutput);
-                            writer.flush();
-                            if (!serverOutput.equals("No result")) {
-                                serverInput = reader.readLine();
-                                tempSplit = serverInput.split(",", 2);
-                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                                if (tempUser.isPresent()) {
-                                    Server.unInvisUser(tempUser.get(), currentUser);
-                                    writer.println(SUCCESS);
-                                } else {
-                                    writer.println(FAIL);
-                                }
-                                writer.flush();
-                            }
-                        }
-                        case 5 -> {
-                            tempUserList.clear();
-                            tempUserList2.clear();
-                            tempUserList = Server.searchValidUser(reader.readLine(), currentUser);
-                            serverOutput = tempUserList.stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
-                            writer.println(serverOutput);
-                            writer.flush();
-                            if (!serverOutput.equals("No result")) {
-                                serverInput = reader.readLine();
-                                tempSplit = serverInput.split(",", 2);
-                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                                if (tempUser.isPresent()) {
-                                    if (!currentUser.isBlocked(tempUser.get())) {
-                                        tempUserList2 = currentUser.getInvisibleList();
-                                        tempUserList2.add(tempUser.get());
-                                        currentUser.setInvisibleList(tempUserList2);
-                                        Server.addAction("invisible", tempUser.get(), currentUser);
-                                        writer.println(SUCCESS);
-                                    } else {
-                                        writer.println("Already invisible this user");
-                                    }
-                                } else {
-                                    writer.println(FAIL);
-                                }
-                                writer.flush();
-                            }
-                        }
-                        case 4 -> {
-                            tempUserList.clear();
-                            tempUserList = currentUser.getBlockList();
-                            serverOutput = currentUser.getBlockList().stream()
-                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
-                                    .collect(Collectors.joining(";"));
-                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
-                            writer.println(serverOutput);
-                            writer.flush();
-                            if (!serverOutput.equals("No result")) {
-                                serverInput = reader.readLine();
-                                tempSplit = serverInput.split(",", 2);
-                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
-                                if (tempUser.isPresent()) {
-                                    Server.unBlockUser(tempUser.get(), currentUser);
-                                    writer.println(SUCCESS);
-                                } else {
-                                    writer.println(FAIL);
-                                }
-                                writer.flush();
-                            }
-                        }
-                        case 3 -> {
                             serverInput = reader.readLine();
                             switch (Integer.parseInt(serverInput)) {
                                 case 0:
@@ -238,6 +164,80 @@ public class ClientHandler implements Runnable{
                             }
                             writer.println(SUCCESS);
                             writer.flush();
+                        }
+                        case 5 -> {
+                            tempUserList.clear();
+                            tempUserList = currentUser.getInvisibleList();
+                            serverOutput = currentUser.getInvisibleList().stream()
+                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
+                                    .collect(Collectors.joining(";"));
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
+                            writer.println(serverOutput);
+                            writer.flush();
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    Server.unInvisUser(tempUser.get(), currentUser);
+                                    writer.println(SUCCESS);
+                                } else {
+                                    writer.println(FAIL);
+                                }
+                                writer.flush();
+                            }
+                        }
+                        case 4 -> {
+                            tempUserList.clear();
+                            tempUserList2.clear();
+                            tempUserList = Server.searchValidUser(reader.readLine(), currentUser);
+                            serverOutput = tempUserList.stream()
+                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
+                                    .collect(Collectors.joining(";"));
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
+                            writer.println(serverOutput);
+                            writer.flush();
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    if (!currentUser.isBlocked(tempUser.get())) {
+                                        tempUserList2 = currentUser.getInvisibleList();
+                                        tempUserList2.add(tempUser.get());
+                                        currentUser.setInvisibleList(tempUserList2);
+                                        Server.addAction("invisible", tempUser.get(), currentUser);
+                                        writer.println(SUCCESS);
+                                    } else {
+                                        writer.println("Already invisible this user");
+                                    }
+                                } else {
+                                    writer.println(FAIL);
+                                }
+                                writer.flush();
+                            }
+                        }
+                        case 3 -> {
+                            tempUserList.clear();
+                            tempUserList = currentUser.getBlockList();
+                            serverOutput = currentUser.getBlockList().stream()
+                                    .map(user -> user.getEmail() + "," + user.getNameOfUser())
+                                    .collect(Collectors.joining(";"));
+                            serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
+                            writer.println(serverOutput);
+                            writer.flush();
+                            if (!serverOutput.equals("No result")) {
+                                serverInput = reader.readLine();
+                                tempSplit = serverInput.split(",", 2);
+                                tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
+                                if (tempUser.isPresent()) {
+                                    Server.unBlockUser(tempUser.get(), currentUser);
+                                    writer.println(SUCCESS);
+                                } else {
+                                    writer.println(FAIL);
+                                }
+                                writer.flush();
+                            }
                         }
                         case 2 -> {
                             tempUserList.clear();
@@ -343,29 +343,53 @@ public class ClientHandler implements Runnable{
                                             }
                                             case 1 -> {
                                                 serverInput = reader.readLine();
-                                                tempSplit = serverInput.split(";", 3);
                                                 try {
-                                                    currentUser.editMessage(
-                                                            tempReceiver, tempSplit[0], tempSplit[1], tempSplit[2]);
-                                                } catch (NoMessageFoundException e) {
+                                                    serverOutput = currentUser.exactMessage(tempReceiver, serverInput);
+                                                    serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
+                                                    writer.println(serverOutput);
+                                                    writer.flush();
+                                                    if (!serverOutput.equals("No result")) {
+                                                        serverInput = reader.readLine();
+                                                        tempSplit = serverInput.split(";", 3);
+                                                        try {
+                                                            currentUser.editMessage(
+                                                                    tempReceiver, tempSplit[0], tempSplit[1], tempSplit[2]);
+                                                        } catch (NoMessageFoundException e) {
+                                                            writer.println(e.getMessage());
+                                                            writer.flush();
+                                                        }
+                                                        writer.println(SUCCESS);
+                                                        writer.flush();
+                                                    }
+                                                } catch(NoPreviousMessageException e){
                                                     writer.println(e.getMessage());
                                                     writer.flush();
                                                 }
-                                                writer.println(SUCCESS);
-                                                writer.flush();
                                             }
                                             case 2 -> {
                                                 serverInput = reader.readLine();
-                                                tempSplit = serverInput.split(";", 2);
                                                 try {
-                                                    currentUser.deleteMessage(
-                                                            tempReceiver, tempSplit[0], tempSplit[1]);
-                                                } catch (NoMessageFoundException e) {
+                                                    serverOutput = currentUser.exactMessage(tempReceiver, serverInput);
+                                                    serverOutput = (serverOutput.isEmpty()) ? "No result" : serverOutput;
+                                                    writer.println(serverOutput);
+                                                    writer.flush();
+                                                    if (!serverOutput.equals("No result")) {
+                                                        serverInput = reader.readLine();
+                                                        tempSplit = serverInput.split(";", 3);
+                                                        try {
+                                                            currentUser.deleteMessage(
+                                                                    tempReceiver, tempSplit[0], tempSplit[1]);
+                                                        } catch (NoMessageFoundException e) {
+                                                            writer.println(e.getMessage());
+                                                            writer.flush();
+                                                        }
+                                                        writer.println(SUCCESS);
+                                                        writer.flush();
+                                                    }
+                                                } catch(NoPreviousMessageException e){
                                                     writer.println(e.getMessage());
                                                     writer.flush();
                                                 }
-                                                writer.println(SUCCESS);
-                                                writer.flush();
                                             }
                                             case 3 -> keepConversation = false;
                                         }
