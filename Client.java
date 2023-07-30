@@ -66,7 +66,7 @@ public class Client {
         JLabel password = new JLabel("Password: ");
         panel.add(password, gridBagConstraints);
         gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        JTextField passwordText = new JTextField(20);
+        JPasswordField passwordText = new JPasswordField(20);
         panel.add(passwordText, gridBagConstraints);
 
         gridBagConstraints.anchor = GridBagConstraints.LINE_START;
