@@ -95,7 +95,7 @@ public void setConversationUser(ArrayList<User>) - setter for conversation
 
 public ArrayList<User> getConversationUser() - getter for conversationUser
 
-### Client.java
+## Client.java
 
 fields:
 
@@ -123,7 +123,7 @@ public static void mainSellerPage() - display seller main page
 
 public static void messagePage() - display message page
 
-### Server.java
+## Server.java
 
 fields:
 
