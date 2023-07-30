@@ -9,13 +9,21 @@ William Yu - Submitted Report
 
 ## Classes:
 
-# Server.java - Handles all preivous file and record all previous action. Server will start then take in multiple clientHandler.
+# Server.java
 
-# Client.java - Accepts input from the user which is sent to the server for processing and storage.
+Handles all preivous file and record all previous action. Server will start then take in multiple clientHandler.
 
-# User.java - A class containing the information associated with a certain user. 
+# Client.java 
 
-# ClientHandler.java - Multithread for client that allow the server to take in multiple client at same time. Serve as a middle transition class between client and server. 
+Accepts input from the user which is sent to the server for processing and storage.
+
+# User.java 
+
+A class containing the information associated with a certain user. 
+
+# ClientHandler.java
+
+Multithread for client that allow the server to take in multiple client at same time. Serve as a middle transition class between client and server. 
 
 ### User.java
 
