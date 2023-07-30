@@ -572,7 +572,7 @@ public class Client {
                     }
                     if(!keepMessage) {
                         keepMessage = true;
-                        frame.dispose();    
+                        frame.dispose();
                     }
                 }
             }).start();
