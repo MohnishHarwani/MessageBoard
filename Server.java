@@ -25,7 +25,7 @@ public class Server {
             users.add(user);
 
             ArrayList<String> tempUsers = new ArrayList<String>();
-            try (BufferedReader reader = new BufferedReader(new FileReader("userinfo.csv"))) {
+            try (BufferedReader reader = new BufferedReader(new FileReader("userInfo.csv"))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     tempUsers.add(line);
@@ -132,7 +132,7 @@ public class Server {
 
     public synchronized static void accountModification(String modifier, int action, User currentUser) {
         try {
-            BufferedReader infoReader = new BufferedReader(new FileReader("userinfo.csv"));
+            BufferedReader infoReader = new BufferedReader(new FileReader("userInfo.csv"));
             BufferedReader actionReader = new BufferedReader(new FileReader("userAction.csv"));
             ArrayList<String> tempInfo = new ArrayList<String>();
             ArrayList<String> tempAction = new ArrayList<String>();
