@@ -82,10 +82,6 @@ public class User extends Thread {
 
     public void addStore(String singleStoreName) { this.storeName.add(singleStoreName); }
 
-    public void addConvUser(User user) {
-        this.conversationUser.add(user);
-    }
-
     public void addBlockUser(User user) {
         this.blockList.add(user);
     }
@@ -95,11 +91,13 @@ public class User extends Thread {
     }
 
     public boolean isTalked(User receiver) {
-        return conversationUser.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
+        return conversationUser.stream().anyMatch(conversationUser -> conversationUser.equals(receiver));
     }
+
     public boolean isBlocked(User receiver) {
         return blockList.stream().anyMatch(blockedUser -> blockedUser.equals(receiver));
     }
+
     public boolean isInvisible(User receiver) {
         return invisibleList.stream().anyMatch(invUser -> invUser.equals(receiver));
     }

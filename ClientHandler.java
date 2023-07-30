@@ -202,10 +202,8 @@ public class ClientHandler implements Runnable{
                                 tempSplit = serverInput.split(",", 2);
                                 tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
                                 if (tempUser.isPresent()) {
-                                    if (!currentUser.isBlocked(tempUser.get())) {
-                                        tempUserList2 = currentUser.getInvisibleList();
-                                        tempUserList2.add(tempUser.get());
-                                        currentUser.setInvisibleList(tempUserList2);
+                                    if (!currentUser.isInvisible(tempUser.get())) {
+                                        currentUser.addInvis(tempUser.get());
                                         Server.addAction("invisible", tempUser.get(), currentUser);
                                         writer.println(SUCCESS);
                                     } else {
@@ -255,9 +253,7 @@ public class ClientHandler implements Runnable{
                                 tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
                                 if (tempUser.isPresent()) {
                                     if (!currentUser.isBlocked(tempUser.get())) {
-                                        tempUserList2 = currentUser.getBlockList();
-                                        tempUserList2.add(tempUser.get());
-                                        currentUser.setBlockList(tempUserList2);
+                                        currentUser.addBlockUser(tempUser.get());
                                         Server.addAction("block", tempUser.get(), currentUser);
                                         writer.println(SUCCESS);
                                     } else {
@@ -284,7 +280,7 @@ public class ClientHandler implements Runnable{
                                 tempSplit = serverInput.split(",", 2);
                                 tempUser = Server.exactPerson(tempUserList, tempSplit[0], tempSplit[1]);
                                 if (tempUser.isPresent()) {
-                                    if (!currentUser.isTalked(tempUser.get())) {
+                                    if (!currentUser.isTalked(tempUser.get()) && !tempUser.get().isTalked(currentUser)) {
                                         currentUser.addConversation(tempUser.get());
                                         tempUser.get().addConversation(currentUser);
                                         Server.addAction("chat", tempUser.get(), currentUser);
@@ -318,7 +314,7 @@ public class ClientHandler implements Runnable{
                                     do {
                                         try {
                                             serverOutput = Server.displayMessage(
-                                                    currentUser.display50Message(tempReceiver), 50);
+                                                    currentUser.display50Message(tempReceiver), 20);
                                             writer.println(serverOutput);
                                         } catch (NoPreviousMessageException e) {
                                             writer.println(FAIL);

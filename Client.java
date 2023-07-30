@@ -29,11 +29,6 @@ public class Client {
     public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
     public static final Pattern EMAIL_REGEX_PATTERN = Pattern.compile(EMAIL_PATTERN);
     public static final String NAME_PATTERN = "[A-Z][a-zA-Z]*";
-    public static final Pattern NAME_REGEX_PATTERN = Pattern.compile(NAME_PATTERN);
-    public static final String EDIT_MESSAGE_FORMAT = ".*;\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
-    public static final Pattern EEDIT_MESSAGE_PATTERN = Pattern.compile(EDIT_MESSAGE_FORMAT);
-    public static final String DELETE_MESSAGE_FORMAT = "\\d{4}/\\d{2}/\\d{2} \\d{2}:\\d{2}:\\d{2};.*";
-    public static final Pattern DELETE_MESSAGE_PATTERN = Pattern.compile(DELETE_MESSAGE_FORMAT);
     public static final String GUI_TITLE = "Messager";
     public static final Object LOCK = new Object();
     public static String GUI_PASS = new String();
@@ -42,7 +37,6 @@ public class Client {
     public static ArrayList<String> sellerName;
     public static ArrayList<String> conversationUserList;
     public static String currentUser;
-    public static boolean keepMessage;
     public static boolean isFrameDisposed;
     public static ArrayList<String> messageList = new ArrayList<>();
 
@@ -529,7 +523,6 @@ public class Client {
         });
     }
 
-
     public static void messagePage() {
         JFrame frame = new JFrame("User Info");
         JPanel panel = new JPanel(new GridBagLayout());
@@ -559,26 +552,22 @@ public class Client {
             panel.add(new JLabel("\n"), gridBagConstraints);
         }
         frame.add(panel);
-        frame.setSize(400, 750);
+        frame.setSize(600, 750);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
-            new Thread(() -> {
-                while (true) {
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    if(!keepMessage) {
-                        keepMessage = true;
-                        frame.dispose();
-                    }
+        frame.setLocation( 300, 200);
+        new Thread(() -> {
+            try {
+                synchronized (LOCK) {
+                    LOCK.wait();
                 }
-            }).start();
+                frame.dispose();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
-
-
 
     public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
@@ -926,15 +915,22 @@ public class Client {
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
-                                if (!clientInput.equals("fail")) {
+                                if (clientInput.equals("fail")) {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Successfully invisible %s with %s",
+                                            String.format("Fail to invisible %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+                                } else if (clientInput.equals("Already invisible this user")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Already invisible %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Fail to invisible %s with %s",
+                                            String.format("Successfully invisible %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -1021,15 +1017,22 @@ public class Client {
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
-                                if (!clientInput.equals("fail")) {
+                                if (clientInput.equals("fail")) {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Successfully blocked %s with %s",
+                                            String.format("Fail to block %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+                                } else if (clientInput.equals("Already blocked this user")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Already blocked %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Fail to block %s with %s",
+                                            String.format("Successfully blocked %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -1077,15 +1080,21 @@ public class Client {
                                 writer.println(userInputString);
                                 writer.flush();
                                 clientInput = reader.readLine();
-                                if (!clientInput.equals("fail")) {
+                                if (clientInput.equals("fail")) {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Successfully start a conversation to %s with %s",
+                                            String.format("Fail to start a conversation to %s with %s",
+                                                    userInputString.substring(userInputString.indexOf(",") + 1),
+                                                    userInputString.substring(0, userInputString.indexOf(","))),
+                                            GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                                } else if (clientInput.equals("Conversation exist")) {
+                                    JOptionPane.showMessageDialog(null,
+                                            String.format("Already have a conversation with %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
                                     JOptionPane.showMessageDialog(null,
-                                            String.format("Fail to start a conversation to %s with %s",
+                                            String.format("Successfully start a conversation to %s with %s",
                                                     userInputString.substring(userInputString.indexOf(",") + 1),
                                                     userInputString.substring(0, userInputString.indexOf(","))),
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -1115,7 +1124,6 @@ public class Client {
                                             "Incorrect email and name",
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
-
                                     do {
                                         keepConversation = true;
                                         clientInput = reader.readLine();
@@ -1129,7 +1137,6 @@ public class Client {
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
                                                     .forEach(messageList::add);
-                                            keepMessage = true;
                                             SwingUtilities.invokeLater(Client::messagePage);
                                         }
                                         String[] accountModificationText = {"0: New message", "1: Edit Message",
@@ -1138,7 +1145,9 @@ public class Client {
                                                 "Please select option from the list", GUI_TITLE,
                                                 JOptionPane.QUESTION_MESSAGE, null, accountModificationText, null);
                                         if (userInputString == null) {
-                                            keepMessage = false;
+                                            synchronized (LOCK) {
+                                                LOCK.notify();
+                                            }
                                             endProgramDialog();
                                             return;
                                         }
@@ -1147,7 +1156,9 @@ public class Client {
                                             case "1: Edit Message" -> userInputInt = 1;
                                             case "2: DeleteMessage" -> userInputInt = 2;
                                             case "3: Exit conversation" -> {
-                                                keepMessage = false;
+                                                synchronized (LOCK) {
+                                                    LOCK.notify();
+                                                }
                                                 keepConversation = false;
                                                 userInputInt = 3;
                                             }
@@ -1182,7 +1193,9 @@ public class Client {
                                                                     " cannot send message",
                                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                 }
-                                                keepMessage = false;
+                                                synchronized (LOCK) {
+                                                    LOCK.notify();
+                                                }
                                             }
                                             case 1 -> {
                                                 do {
@@ -1191,7 +1204,9 @@ public class Client {
                                                             "What is The old message content you want to edit",
                                                             GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                                     if (userInputString == null) {
-                                                        keepMessage = false;
+                                                        synchronized (LOCK) {
+                                                            LOCK.notify();
+                                                        }
                                                         endProgramDialog();
                                                         return;
                                                     }
@@ -1262,7 +1277,10 @@ public class Client {
                                                                 GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                     }
                                                 }
-                                                keepMessage = false;
+
+                                                synchronized (LOCK) {
+                                                    LOCK.notify();
+                                                }
                                             }
                                             case 2 -> {
                                                 tempString = "";
@@ -1324,14 +1342,18 @@ public class Client {
                                                                 GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                     }
                                                 }
-                                                keepMessage = false;
+                                                synchronized (LOCK) {
+                                                    LOCK.notify();
+                                                }
                                             }
                                             case 3 -> {
                                                 JOptionPane.showMessageDialog(null,
                                                         "Exiting conversation",
                                                         GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                 keepConversation = false;
-                                                keepMessage = false;
+                                                synchronized (LOCK) {
+                                                    LOCK.notify();
+                                                }
                                             }
                                         }
                                     } while (keepConversation);
