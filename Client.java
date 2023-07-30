@@ -1,18 +1,15 @@
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListDataEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -46,7 +43,6 @@ public class Client {
     public static ArrayList<String> conversationUserList;
     public static String currentUser;
     public static boolean keepMessage;
-    public static boolean refreshMessage;
     public static boolean isFrameDisposed;
     public static ArrayList<String> messageList = new ArrayList<>();
 
@@ -539,10 +535,9 @@ public class Client {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
 
-        boolean x = false;
         boolean newLine = false;
-        String[] tempArray;
-        String name1 = new String();
+        String[] tempArray = messageList.get(0).split("-");
+        String name1 = tempArray[1];
         for (int i = 0; i < messageList.size(); i++) {
             int counter = i * 3;
             tempArray = messageList.get(i).split("-");
@@ -562,25 +557,25 @@ public class Client {
             panel.add(new JLabel(content), gridBagConstraints);
             gridBagConstraints.gridy = counter + 2;
             panel.add(new JLabel("\n"), gridBagConstraints);
-            x = !x;
         }
         frame.add(panel);
         frame.setSize(400, 750);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
-
-        new Thread(() -> {
-            while (keepMessage) {
-                if (!keepMessage) {
-                    panel.repaint();
-                    refreshMessage = false;
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if(!keepMessage) {
+                        keepMessage = true;
+                        frame.dispose();    
+                    }
                 }
-                if (!keepMessage) {
-                    frame.dispose();
-                }
-            }
-        }).start();
+            }).start();
     }
 
 
@@ -1120,6 +1115,7 @@ public class Client {
                                             "Incorrect email and name",
                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                 } else {
+
                                     do {
                                         keepConversation = true;
                                         clientInput = reader.readLine();
@@ -1133,16 +1129,16 @@ public class Client {
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
                                                     .forEach(messageList::add);
+                                            keepMessage = true;
                                             SwingUtilities.invokeLater(Client::messagePage);
                                         }
-                                        keepMessage = true;
-                                        refreshMessage = false;
                                         String[] accountModificationText = {"0: New message", "1: Edit Message",
                                                 "2: DeleteMessage", "3: Exit conversation"};
                                         userInputString = (String) JOptionPane.showInputDialog(null,
                                                 "Please select option from the list", GUI_TITLE,
                                                 JOptionPane.QUESTION_MESSAGE, null, accountModificationText, null);
                                         if (userInputString == null) {
+                                            keepMessage = false;
                                             endProgramDialog();
                                             return;
                                         }
@@ -1151,6 +1147,7 @@ public class Client {
                                             case "1: Edit Message" -> userInputInt = 1;
                                             case "2: DeleteMessage" -> userInputInt = 2;
                                             case "3: Exit conversation" -> {
+                                                keepMessage = false;
                                                 keepConversation = false;
                                                 userInputInt = 3;
                                             }
@@ -1185,7 +1182,7 @@ public class Client {
                                                                     " cannot send message",
                                                             GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                 }
-                                                refreshMessage = true;
+                                                keepMessage = false;
                                             }
                                             case 1 -> {
                                                 do {
@@ -1194,6 +1191,7 @@ public class Client {
                                                             "What is The old message content you want to edit",
                                                             GUI_TITLE, JOptionPane.QUESTION_MESSAGE);
                                                     if (userInputString == null) {
+                                                        keepMessage = false;
                                                         endProgramDialog();
                                                         return;
                                                     }
@@ -1263,8 +1261,8 @@ public class Client {
                                                                 "Input message not found",
                                                                 GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                     }
-                                                    refreshMessage = true;
                                                 }
+                                                keepMessage = false;
                                             }
                                             case 2 -> {
                                                 tempString = "";
@@ -1325,8 +1323,8 @@ public class Client {
                                                                 "Input message not found",
                                                                 GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                                                     }
-                                                    refreshMessage = true;
                                                 }
+                                                keepMessage = false;
                                             }
                                             case 3 -> {
                                                 JOptionPane.showMessageDialog(null,
