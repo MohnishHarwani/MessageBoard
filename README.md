@@ -25,7 +25,7 @@ A class containing the information associated with a certain user.
 
 Multithread for client that allow the server to take in multiple client at same time. Serve as a middle transition class between client and server. 
 
-### User.java
+## User.java
 
 fields:
 
