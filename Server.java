@@ -117,12 +117,6 @@ public class Server {
                     String newFileName = fileName.replace(currentUser.getNameOfUser(), modifier);
                     File newFile = new File(directory, newFileName);
                     boolean success = file.renameTo(newFile);
-                    /*
-                    if (success) {
-                        System.out.println("Renamed: " + fileName + " -> " + newFileName);
-                    } else {
-                        System.out.println("Failed to rename: " + fileName);
-                    }*/
                 } catch (IOException e) {
                     throw new NoMessageFoundException("User have no conversation");
                 }

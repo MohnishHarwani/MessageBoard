@@ -411,5 +411,4 @@ public class ClientHandler implements Runnable{
             System.out.printf("%s disconnect\n", currentUser.toString());
         }
     }
-
 }

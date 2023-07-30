@@ -533,23 +533,58 @@ public class Client {
         });
     }
 
-    /*
-        public static void messagePage(ArrayList<String> message) {
-            new Thread(() -> {
-                while (keepMessage) {
-                    if (!keepMessage) {
-                        panel.repaint();
-                        refreshMessage = false;
-                    }
-                    if (!keepMessage) {
-                        frame.dispose();
-                    }
-                }
-            }).start();
+
+    public static void messagePage() {
+        JFrame frame = new JFrame("User Info");
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gridBagConstraints = new GridBagConstraints();
+
+        boolean x = false;
+        boolean newLine = false;
+        String[] tempArray;
+        String name1 = new String();
+        for (int i = 0; i < messageList.size(); i++) {
+            int counter = i * 3;
+            tempArray = messageList.get(i).split("-");
+            String tempName = tempArray[1];
+            String assemblyString = "";
+            if (tempName.equals(name1)) {
+                assemblyString = tempArray[0] + " " + tempArray[1];
+                gridBagConstraints.gridx = 0;
+            } else {
+                assemblyString = tempArray[1] + " " + tempArray[0];
+                gridBagConstraints.gridx = 1;
+            }
+            gridBagConstraints.gridy = counter;
+            panel.add(new JLabel(assemblyString), gridBagConstraints);
+            gridBagConstraints.gridy = counter + 1;
+            String content = tempArray[2];
+            panel.add(new JLabel(content), gridBagConstraints);
+            gridBagConstraints.gridy = counter + 2;
+            panel.add(new JLabel("\n"), gridBagConstraints);
+            x = !x;
         }
+        frame.add(panel);
+        frame.setSize(400, 750);
+        frame.setLocationRelativeTo(null);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        new Thread(() -> {
+            while (keepMessage) {
+                if (!keepMessage) {
+                    panel.repaint();
+                    refreshMessage = false;
+                }
+                if (!keepMessage) {
+                    frame.dispose();
+                }
+            }
+        }).start();
+    }
 
 
-     */
+
     public static void main(String[] args) throws IOException {
         Scanner scan = new Scanner(System.in);
         int counter = 0;
@@ -559,10 +594,8 @@ public class Client {
         boolean seller = false;
         boolean keepOption = true;
         boolean keepConversation = true;
-        String userInfoTemp = "";
         String tempString = "";
         String clientInput = "";
-        String clientOutput = "";
         ArrayList<String> userNameList = new ArrayList<>();
         ArrayList<String> userNameList2 = new ArrayList<>();
         ArrayList<String> storeNameList = new ArrayList<>();
@@ -1100,8 +1133,7 @@ public class Client {
                                             Arrays.stream(clientInput.split(";"))
                                                     .map(String::trim)
                                                     .forEach(messageList::add);
-                                            System.out.println("Messages:");
-                                            messageList.forEach(System.out::println);
+                                            SwingUtilities.invokeLater(Client::messagePage);
                                         }
                                         keepMessage = true;
                                         refreshMessage = false;
