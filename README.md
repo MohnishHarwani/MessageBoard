@@ -1,7 +1,7 @@
 # MessageBoard
 Message Board Project for CS 180 @ Purdue
 
-Instructions: when need to compile and run the program: first start the Server.java then start client.java for use (can start multiple user at same time)
+Instructions: when need to compile and run the program: first start the Server.java then start client.java for use (can start multiple client at same time)
 
 William Yu - Submitted Vocareum work space
 
