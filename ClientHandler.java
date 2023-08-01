@@ -52,10 +52,9 @@ public class ClientHandler implements Runnable{
                         try {
                             serverInput = reader.readLine();
                             tempSplit = serverInput.split(",", 4);
-                            currentUser = new User(
-                                    Boolean.parseBoolean(tempSplit[0]), tempSplit[1], tempSplit[2], tempSplit[3]);
                             Server.addUser(new User(
                                     Boolean.parseBoolean(tempSplit[0]), tempSplit[1], tempSplit[2], tempSplit[3]));
+                            currentUser = Server.users.get(Server.users.size() - 1);
                             notloggedin = false;
                             writer.println(SUCCESS);
                             writer.flush();
@@ -73,7 +72,6 @@ public class ClientHandler implements Runnable{
                             notloggedin = false;
                         } else {
                             writer.println(FAIL);
-                            notloggedin = true;
                         }
                         writer.flush();
                     }
@@ -86,12 +84,12 @@ public class ClientHandler implements Runnable{
                     if (seller) {
                         writer.println("Seller display");
                         writer.flush();
-                        serverOutput = currentUser.getStoreName().stream().collect(Collectors.joining(";"));
+                        serverOutput = String.join(";", currentUser.getStoreName());
                     } else {
                         writer.println("Customer display");
                         writer.flush();
                         serverOutput = Server.allVisibleStore(currentUser).stream()
-                                .map(user -> user.getStoreName().stream().collect(Collectors.joining(",")))
+                                .map(user -> String.join(",", user.getStoreName()))
                                 .map(storeNames -> storeNames.isEmpty() ? "None" : storeNames)
                                 .collect(Collectors.joining(";"));
                         writer.println(serverOutput);
@@ -128,7 +126,13 @@ public class ClientHandler implements Runnable{
                                 writer.println(serverOutput);
                                 writer.flush();
                                 serverInput = reader.readLine();
-                                currentUser.addStore(serverInput);
+
+                                tempUser = Server.users.stream()
+                                        .filter(n -> n.equals(currentUser)) // Filtering even numbers
+                                        .findFirst();
+                                if (tempUser.isPresent()) {
+                                    tempUser.get().addStore(serverInput);
+                                }
                                 Server.userAddStore(serverInput, currentUser);
                             }
                         }
@@ -296,10 +300,15 @@ public class ClientHandler implements Runnable{
                             }
                         }
                         case 0 -> {
-                            tempUserList = currentUser.getConversationUser();
+                            tempUserList.clear();
+                            tempUserList = new ArrayList<>(currentUser.getConversationUser());
+                            System.out.println("-----");
+                            currentUser.getConversationUser().forEach(System.out::println);
                             serverOutput = currentUser.getConversationUser().stream()
                                     .map(user -> user.getEmail() + "," + user.getNameOfUser())
                                     .collect(Collectors.joining(";"));
+                            System.out.println("_^-^");
+                            System.out.println(serverOutput);
                             if (!tempUserList.isEmpty()) {
                                 writer.println(serverOutput);
                                 writer.flush();
@@ -371,10 +380,11 @@ public class ClientHandler implements Runnable{
                                                     writer.flush();
                                                     if (!serverOutput.equals("No result")) {
                                                         serverInput = reader.readLine();
-                                                        tempSplit = serverInput.split(";", 3);
+                                                        System.out.println(serverInput);
+                                                        tempSplit = serverInput.split("-", 2);
                                                         try {
                                                             currentUser.deleteMessage(
-                                                                    tempReceiver, tempSplit[0], tempSplit[1]);
+                                                                    tempReceiver, tempSplit[1], tempSplit[0]);
                                                         } catch (NoMessageFoundException e) {
                                                             writer.println(e.getMessage());
                                                             writer.flush();

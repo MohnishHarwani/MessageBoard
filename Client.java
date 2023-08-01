@@ -66,7 +66,7 @@ public class Client {
         JLabel password = new JLabel("Password: ");
         panel.add(password, gridBagConstraints);
         gridBagConstraints.anchor = GridBagConstraints.LINE_END;
-        JPasswordField passwordText = new JPasswordField(20);
+        JTextField passwordText = new JTextField(20);
         panel.add(passwordText, gridBagConstraints);
 
         gridBagConstraints.anchor = GridBagConstraints.LINE_START;
@@ -169,8 +169,8 @@ public class Client {
             tempErrorList.add("Invalid email format");
         }
         String tempString = info.get(++line);
-        if (!Arrays.stream(tempString.split("\\s+")).
-                allMatch(word -> word.matches(NAME_PATTERN))) {
+        if (Arrays.stream(tempString.split("\\s+")).
+                noneMatch(word -> word.matches(NAME_PATTERN)) || !tempString.contains(" ")) {
             tempErrorList.add("Invalid name format." +
                     " Name need to have every part's first letter uppercase");
         }
@@ -656,6 +656,9 @@ public class Client {
                     clientInput = reader.readLine();
                     if (clientInput.equals("fail")) {
                         JOptionPane.showMessageDialog(null, "Invalid email or password",
+                                GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
+                    } else if (clientInput.equals("User Already exist")) {
+                        JOptionPane.showMessageDialog(null, "User exists already.",
                                 GUI_TITLE, JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(null, "Successfully logged in",
@@ -1301,7 +1304,6 @@ public class Client {
                                                         error = true;
                                                     }
                                                 } while (error);
-                                                tempString = userInputString + ";";
                                                 writer.println(userInputString);
                                                 writer.flush();
                                                 clientInput = reader.readLine();
@@ -1314,7 +1316,6 @@ public class Client {
                                                     Arrays.stream(clientInput.split(";"))
                                                             .map(String::trim)
                                                             .forEach(tempMessageList::add);
-                                                    //tempString += userInputString + ";";
                                                     do {
                                                         error = false;
                                                         userInputString = (String) JOptionPane.showInputDialog(null,
@@ -1332,7 +1333,7 @@ public class Client {
                                                             error = true;
                                                         }
                                                     } while (error);
-                                                    tempString += userInputString.substring(0, userInputString.indexOf("-"));
+                                                    tempString = userInputString;
                                                     writer.println(tempString);
                                                     writer.flush();
                                                     clientInput = reader.readLine();

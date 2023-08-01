@@ -150,7 +150,7 @@ public class Server {
                 case 1:
                     tempInfo.replaceAll(s -> s.contains(currentUser.getEmail()) ?
                             s.replace(currentUser.getEmail(), modifier) : s);
-                    tempAction.replaceAll(s -> s.contains(currentUser.getNameOfUser()) ?
+                    tempAction.replaceAll(s -> s.contains(currentUser.getEmail()) ?
                             s.replace(currentUser.getEmail(), modifier) : s);
                     break;
                 case 2:
@@ -158,8 +158,8 @@ public class Server {
                             s.replace(currentUser.getPassword(), modifier) : s);
                     break;
                 case 3:
-                    tempInfo.removeIf(s -> s.contains(currentUser.getNameOfUser()));
-                    tempAction.removeIf(s -> s.contains(currentUser.getNameOfUser()));
+                    tempInfo.removeIf(s -> s.contains(currentUser.getNameOfUser()) && s.contains(currentUser.getEmail()));
+                    tempAction.removeIf(s -> s.contains(currentUser.getNameOfUser()) && s.contains(currentUser.getEmail()));
                     break;
             }
 
@@ -176,8 +176,8 @@ public class Server {
     }
 
     public synchronized static boolean checkUniqueUser(String email, String nameofUser) {
-        return !users.stream().anyMatch(validUser -> validUser.getEmail().equals(email)
-                && validUser.getNameOfUser().equals(nameofUser));
+        return users.stream().noneMatch(validUser -> validUser.getEmail().equals(email)
+                || validUser.getNameOfUser().equals(nameofUser));
     }
 
     public synchronized static Optional<User> authenticateUser(ArrayList<User> listOfUser,
@@ -198,7 +198,7 @@ public class Server {
         ArrayList<User> tempUserList = new ArrayList<>(currentUser.getInvisibleList());
         tempUserList.removeIf(n -> n.equals(user));
         currentUser.setInvisibleList(tempUserList);
-        removeAction("invis", user, currentUser);
+        removeAction("invisible", user, currentUser);
     }
 
     public synchronized static Optional<User> exactPerson(ArrayList<User> listOfUser, String email, String name) {

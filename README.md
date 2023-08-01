@@ -5,7 +5,7 @@ Instructions: when need to compile and run the program: first start the Server.j
 
 William Yu - Submitted Vocareum work space
 
-William Yu - Submitted Report
+Ben Hartley - Submitted Report
 
 ## Classes:
 

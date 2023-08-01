@@ -187,7 +187,7 @@ public class User extends Thread {
                 temp = bfr.readLine();
                 messageDecomp = temp.split(",", 4);
                 if (messageDecomp[3].contains(oldMessage) && time.equals(messageDecomp[2])) {
-                    messageDecomp[3] = messageDecomp[3].replace(oldMessage, newMessage);
+                    messageDecomp[3] = newMessage;
                     noMessageFound = false;
                 }
 
@@ -330,7 +330,7 @@ public class User extends Thread {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String[] messageData = line.split(",", 4);
-                    if (messageData[3].equals(message)) {
+                    if (messageData[3].contains(message)) {
                         messageData[3] = commaReplaceDisplay(messageData[3]);
                         messages.add(messageData[2] + "-" + messageData[3]);
                     }
