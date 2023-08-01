@@ -119,3 +119,6 @@ public static ArrayList<User> currentVisibleConversationUser() - returns a list 
 
 public static String displayMessage() - returns a formatted String containing the users message data.
 
+
+
+Project 5 report submitted by Ben Hartley
