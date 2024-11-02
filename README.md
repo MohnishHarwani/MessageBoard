@@ -118,7 +118,3 @@ public static ArrayList<User> allVisibleStore() - searches all of the registered
 public static ArrayList<User> currentVisibleConversationUser() - returns a list of all of the users available conversations, hiding messages that are not supposed to be visible to a given user.
 
 public static String displayMessage() - returns a formatted String containing the users message data.
-
-
-
-Project 5 report submitted by Ben Hartley
