@@ -1,7 +1,7 @@
 # MessageBoard
 Message Board Project for CS 180 @ Purdue
 
-For our project, we decided to implement the message board
+A server-client system for efficiently managing multiple users interacting across the internet. Requires users to create an account/login, and allows users to talk to other users, block/restrict accounts, modify and save chat history, etc. Includes a GUI for a more comfortable user experience.
 
 ## Classes:
 
